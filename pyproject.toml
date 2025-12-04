@@ -1,0 +1,24 @@
+[project]
+name = "lean-agent"
+version = "0.1.0"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+  "flash-attn>=2.8.3",
+  "glances>=4.3.3",
+  "gpustat>=1.1.1",
+  "matplotlib>=3.10.7",
+  "seaborn>=0.13.2",
+  "verifiers==0.1.8.post1",
+]
+
+[tool.uv.workspace]
+members = [
+  "environments/minif2f_multiturn",
+  "environments/minif2f_decompose",
+  "environments/minif2f_prover_bench",
+]
+
+[tool.uv.sources]
+minif2f-decompose = { workspace = true }
+minif2f-prover-bench = { workspace = true }

@@ -1,0 +1,14 @@
+[project]
+name = "minif2f-prover-bench"
+version = "0.0.0"
+description = "MiniF2F prover-only benchmark environment"
+requires-python = ">=3.12"
+dependencies = [
+  "verifiers==0.1.8.post1",
+  "minif2f-decompose",
+]
+
+[tool.uv]
+
+[tool.setuptools]
+packages = ["minif2f_prover_bench"]

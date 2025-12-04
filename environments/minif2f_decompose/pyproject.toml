@@ -1,0 +1,26 @@
+[project]
+name = "minif2f-decompose"
+version = "0.0.0"
+description = "Rebuilt MiniF2F decomposition environment"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+  "verifiers==0.1.8.post1",
+  "tree-sitter>=0.21.3",
+  "tree-sitter-languages>=1.10.2",
+  "matplotlib>=3.8",
+  "seaborn>=0.13",
+  "pandas>=2.2",
+]
+
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[tool.uv]
+
+[tool.setuptools]
+packages = ["minif2f_decompose"]
+
+[tool.setuptools.package-dir]
+minif2f_decompose = "."

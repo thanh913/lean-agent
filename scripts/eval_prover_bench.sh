@@ -2,16 +2,18 @@
 # Prover-only benchmark for MiniF2F.
 set -euo pipefail
 
-# --- Models / endpoints (OpenAI-compatible) ---
-# PROVER_MODEL="Goedel-LM/Goedel-Prover-V2-8B"
-PROVER_MODEL="deepseek-ai/DeepSeek-Prover-V2-7B"
-PROVER_BASE_URL="https://containers.datacrunch.io/deepseek-prover-v2-7b/v1"
+# Load config from .env (keys, URLs, model settings)
+source "$(dirname "${BASH_SOURCE[0]}")/load_env.sh"
+
+# --- Models / endpoints (from .env, with defaults) ---
+PROVER_MODEL="${PROVER_MODEL:-deepseek-ai/DeepSeek-Prover-V2-7B}"
+PROVER_BASE_URL="${PROVER_BASE_URL:-https://containers.datacrunch.io/deepseek-prover-v2-7b/v1}"
+VERIFICATION_URL="${VERIFICATION_URL:-http://127.0.0.1:8000/api}"
 
 # --- Evaluation ---
-NUM=1
-ROLLOUTS=1
-CONC=1
-BACKEND_URL="http://127.0.0.1:8000/api"
+NUM=244
+ROLLOUTS=64
+CONC=122
 
 # --- Prover sampling ---
 PROVER_MAX_COMPLETION_TOKENS=30000
@@ -26,7 +28,7 @@ cd "$ROOT_DIR"
 
 ENV_ARGS=$(cat <<JSON
 {
-  "backend_url": "$BACKEND_URL",
+  "verification_url": "$VERIFICATION_URL",
   "verify_timeout": $VERIFY_TIMEOUT,
 	  "max_prover_attempts": $MAX_PROVER_ATTEMPTS,
 	  "max_parallel_prover": $MAX_PARALLEL_PROVER,

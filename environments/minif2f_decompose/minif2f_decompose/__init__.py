@@ -74,7 +74,8 @@ def _prover_time_reward(*, state: State, **_: Any) -> float:
 
 def load_environment(
     *,
-    backend_url: str = "",
+    verification_url: str = "",
+    verification_api_key_env: str = "VERIFICATION_KEY",
     planner_budget: int = 1,
     verify_timeout: int = 60,
     max_prover_attempts: int = 2,
@@ -128,7 +129,7 @@ def load_environment(
                 "answer": "",
                 "info": {
                     "header_lines": header_lines,
-                    "backend_url": backend_url,
+                    "verification_url": verification_url,
                     "session_id": f"minif2f-{session_key}-{idx}",
                 },
             }
@@ -151,7 +152,8 @@ def load_environment(
     )
 
     env_kwargs = {
-        "backend_url": backend_url,
+        "verification_url": verification_url,
+        "verification_api_key_env": verification_api_key_env,
         "planner_budget": planner_budget,
         "verify_timeout": verify_timeout,
         "max_prover_attempts": max_prover_attempts,

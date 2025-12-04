@@ -35,7 +35,8 @@ def _prover_calls_reward(*, state: State, **_: Any) -> float:
 
 def load_environment(
     *,
-    backend_url: str = "",
+    verification_url: str = "",
+    verification_api_key_env: str = "VERIFICATION_KEY",
     verify_timeout: int = 60,
     max_prover_attempts: int = 2,
     prover_model: str = "",
@@ -74,7 +75,7 @@ def load_environment(
                 "info": {
                     "header_lines": header_lines,
                     "theorem_snippet": theorem_snippet,
-                    "backend_url": backend_url,
+                    "verification_url": verification_url,
                 },
             }
         )
@@ -87,7 +88,8 @@ def load_environment(
     )
 
     env_args = {
-        "backend_url": backend_url,
+        "verification_url": verification_url,
+        "verification_api_key_env": verification_api_key_env,
         "verify_timeout": verify_timeout,
         "max_prover_attempts": max_prover_attempts,
         "prover_model": prover_model,

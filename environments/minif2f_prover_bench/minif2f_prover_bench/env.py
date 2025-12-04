@@ -28,7 +28,8 @@ def _join_header_and_snippet(header_lines: list[str], snippet: str) -> str:
 class BenchConfig:
     header_lines: list[str]
     theorem_snippet: str
-    backend_url: str
+    verification_url: str
+    verification_key: str
     verify_timeout: int
     max_prover_attempts: int
     max_parallel_prover: int
@@ -44,7 +45,8 @@ class ProverBenchEnv(Environment):
     def __init__(
         self,
         *,
-        backend_url: str = "",
+        verification_url: str = "",
+        verification_api_key_env: str = "VERIFICATION_KEY",
         verify_timeout: int = 60,
         max_prover_attempts: int = 2,
         prover_model: str = "",
@@ -55,7 +57,8 @@ class ProverBenchEnv(Environment):
         **kwargs: Any,
     ) -> None:
         super().__init__(**kwargs)
-        self.backend_url = backend_url
+        self.verification_url = verification_url
+        self.verification_api_key_env = verification_api_key_env
         self.verify_timeout = verify_timeout
         self.max_prover_attempts = max_prover_attempts
         self.prover_model = prover_model
@@ -67,7 +70,8 @@ class ProverBenchEnv(Environment):
     def _build_config(self, info: dict[str, Any]) -> BenchConfig:
         header_lines = list(info.get("header_lines") or [])
         theorem_snippet = str(info.get("theorem_snippet", "")).strip()
-        backend_url = str(info.get("backend_url", self.backend_url) or "").strip()
+        verification_url = str(info.get("verification_url", self.verification_url) or "").strip()
+        verification_key = os.getenv(self.verification_api_key_env, "")
         verify_timeout = int(info.get("verify_timeout", self.verify_timeout))
         max_prover_attempts = int(info.get("max_prover_attempts", self.max_prover_attempts))
         max_parallel_prover = int(info.get("max_parallel_prover", self.max_parallel_prover) or 1)
@@ -79,7 +83,8 @@ class ProverBenchEnv(Environment):
         return BenchConfig(
             header_lines=header_lines,
             theorem_snippet=theorem_snippet,
-            backend_url=backend_url,
+            verification_url=verification_url,
+            verification_key=verification_key,
             verify_timeout=verify_timeout,
             max_prover_attempts=max(1, max_prover_attempts),
             max_parallel_prover=max(1, max_parallel_prover),
@@ -195,7 +200,8 @@ class ProverBenchEnv(Environment):
             final_code = _join_header_and_snippet(config.header_lines, candidate) + "\n"
             compile_result = await lean_compile(
                 code=final_code,
-                backend_url=config.backend_url,
+                verification_url=config.verification_url,
+                verification_key=config.verification_key,
                 timeout=config.verify_timeout,
                 allow_sorry=False,
                 snippet_id=f"{config.session_id}-attempt{attempt}",

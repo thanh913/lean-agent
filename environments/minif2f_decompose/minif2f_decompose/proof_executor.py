@@ -400,7 +400,8 @@ async def _prove_single_task(
     task: TaskSpec,
     common_prefix: list[str],
     prover: Prover,
-    backend_url: str,
+    verification_url: str,
+    verification_key: str,
     verify_timeout: int,
     max_prover_attempts: int,
     session_id: str,
@@ -437,7 +438,8 @@ async def _prove_single_task(
         candidate_code = "\n".join([*common_prefix, task.header, *body_lines]) + "\n"
         compile_result = await lean_compile(
             code=candidate_code,
-            backend_url=backend_url,
+            verification_url=verification_url,
+            verification_key=verification_key,
             timeout=verify_timeout,
             allow_sorry=False,
             snippet_id=f"{session_id}-task{idx}-attempt{attempt}",
@@ -468,7 +470,8 @@ async def execute_plan(
     plan_text: str,
     header_lines: list[str],
     prover: Prover,
-    backend_url: str,
+    verification_url: str,
+    verification_key: str,
     verify_timeout: int,
     max_prover_attempts: int,
     session_id: str,
@@ -480,7 +483,8 @@ async def execute_plan(
 
     compile_result = await lean_compile(
         code=full_code,
-        backend_url=backend_url,
+        verification_url=verification_url,
+        verification_key=verification_key,
         timeout=verify_timeout,
         allow_sorry=True,
         snippet_id=f"{session_id}-blueprint",
@@ -501,7 +505,8 @@ async def execute_plan(
     if not tasks:
         final_check = await lean_compile(
             code=full_code,
-            backend_url=backend_url,
+            verification_url=verification_url,
+            verification_key=verification_key,
             timeout=verify_timeout,
             allow_sorry=False,
             snippet_id=f"{session_id}-final",
@@ -556,7 +561,8 @@ async def execute_plan(
                 task=spec,
                 common_prefix=common_prefix,
                 prover=prover,
-                backend_url=backend_url,
+                verification_url=verification_url,
+                verification_key=verification_key,
                 verify_timeout=verify_timeout,
                 max_prover_attempts=max_prover_attempts,
                 session_id=session_id,

@@ -91,10 +91,11 @@ def inject_proof_body(snippet: str, body: str) -> str:
 async def lean_compile(
     *,
     code: str,
-    backend_url: str,
+    verification_url: str,
     timeout: int,
     allow_sorry: bool,
     snippet_id: str,
+    verification_key: str = "",
 ) -> LeanCompileResult:
     """Submit `code` to the Lean service and return its response."""
 
@@ -107,10 +108,13 @@ async def lean_compile(
 
     def _post() -> LeanCompileResult:
         try:
+            headers = {"Content-Type": "application/json"}
+            if verification_key:
+                headers["Authorization"] = f"Bearer {verification_key}"
             response = requests.post(
-                backend_url.rstrip("/") + "/check",
+                verification_url.rstrip("/") + "/check",
                 json=payload,
-                headers={"Content-Type": "application/json"},
+                headers=headers,
                 timeout=timeout + 5,
             )
             response.raise_for_status()

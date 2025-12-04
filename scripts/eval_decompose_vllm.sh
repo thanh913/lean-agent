@@ -3,28 +3,29 @@
 # Edit the variables below instead of passing CLI args.
 set -euo pipefail
 
-# --- Models / endpoints (OpenAI-compatible) ---
-PLANNER_MODEL="gemini-2.5-flash"
-PLANNER_BASE_URL="https://generativelanguage.googleapis.com/v1beta/openai/"
-# PLANNER_BASE_URL="https://openrouter.ai/api/v1"
-# PROVER_MODEL="Goedel-LM/Goedel-Prover-V2-8B"
-PROVER_MODEL="deepseek-ai/DeepSeek-Prover-V2-7B"
-PROVER_BASE_URL="https://containers.datacrunch.io/deepseek-prover-v2-7b/v1"
+# Load config from .env (keys, URLs, model settings)
+source "$(dirname "${BASH_SOURCE[0]}")/load_env.sh"
+
+# --- Models / endpoints (from .env, with defaults) ---
+PLANNER_MODEL="${PLANNER_MODEL:-gemini-2.5-flash}"
+PLANNER_BASE_URL="${PLANNER_BASE_URL:-https://generativelanguage.googleapis.com/v1beta/openai/}"
+PROVER_MODEL="${PROVER_MODEL:-deepseek-ai/DeepSeek-Prover-V2-7B}"
+PROVER_BASE_URL="${PROVER_BASE_URL:-https://containers.datacrunch.io/deepseek-prover-v2-7b/v1}"
+VERIFICATION_URL="${VERIFICATION_URL:-http://127.0.0.1:8000/api}"
 
 # --- Evaluation ---
-NUM=10                           # number of problems
+NUM=244                           # number of problems
 ROLLOUTS=1                       # rollouts per problem
-CONC=10                          # concurrency
-BACKEND_URL="http://127.0.0.1:8000/api"  # Lean backend
+CONC=244                          # concurrency
 
 # --- Prover sampling (OpenAI-compatible) ---
 PROVER_MAX_COMPLETION_TOKENS=30000
 
 # --- Environment args ---
-PLANNER_BUDGET=2                # planner attempts per problem (minimal)
+PLANNER_BUDGET=6                # planner attempts per problem (minimal)
 VERIFY_TIMEOUT=90               # Lean compile timeout (seconds)
 MAX_PROVER_ATTEMPTS=4           # direct attempts per subgoal
-MAX_PARALLEL_PROVER=160         # global cap on concurrent prover calls
+MAX_PARALLEL_PROVER=310         # global cap on concurrent prover calls
 
 # --- Planner sampling (planner only; prover sampling is hard-coded in env) ---
 PLANNER_TEMP=0.7
@@ -38,7 +39,7 @@ cd "$ROOT_DIR"
 # Build env args JSON
 ENV_ARGS=$(cat <<JSON
 {
-  "backend_url": "$BACKEND_URL",
+  "verification_url": "$VERIFICATION_URL",
   "planner_budget": $PLANNER_BUDGET,
   "verify_timeout": $VERIFY_TIMEOUT,
   "max_prover_attempts": $MAX_PROVER_ATTEMPTS,

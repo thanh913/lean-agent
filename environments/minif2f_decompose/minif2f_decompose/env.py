@@ -109,7 +109,8 @@ def _extract_blueprint(plan_text: str) -> str | None:
 @dataclass
 class RunConfig:
     header_lines: list[str]
-    backend_url: str
+    verification_url: str
+    verification_key: str
     planner_budget: int
     verify_timeout: int
     max_prover_attempts: int
@@ -175,7 +176,8 @@ class LeanDecomposeEnv(Environment):
     def __init__(
         self,
         *,
-        backend_url: str = "",
+        verification_url: str = "",
+        verification_api_key_env: str = "VERIFICATION_KEY",
         planner_budget: int = 1,
         verify_timeout: int = 60,
         max_prover_attempts: int = 2,
@@ -187,7 +189,8 @@ class LeanDecomposeEnv(Environment):
         **kwargs: Any,
     ) -> None:
         super().__init__(**kwargs)
-        self.backend_url = backend_url
+        self.verification_url = verification_url
+        self.verification_api_key_env = verification_api_key_env
         self.planner_budget = planner_budget
         self.verify_timeout = verify_timeout
         self.max_prover_attempts = max_prover_attempts
@@ -199,7 +202,8 @@ class LeanDecomposeEnv(Environment):
 
     def _build_run_config(self, info: dict[str, Any]) -> RunConfig:
         header_lines = list(info.get("header_lines") or [])
-        backend_url = str(info.get("backend_url", self.backend_url) or "").strip()
+        verification_url = str(info.get("verification_url", self.verification_url) or "").strip()
+        verification_key = os.getenv(self.verification_api_key_env, "")
         planner_budget = int(info.get("planner_budget", self.planner_budget) or 1)
         verify_timeout = int(info.get("verify_timeout", self.verify_timeout))
         max_prover_attempts = int(info.get("max_prover_attempts", self.max_prover_attempts))
@@ -211,7 +215,8 @@ class LeanDecomposeEnv(Environment):
         session_id = str(info.get("session_id") or "plan")
         return RunConfig(
             header_lines=header_lines,
-            backend_url=backend_url,
+            verification_url=verification_url,
+            verification_key=verification_key,
             planner_budget=max(1, planner_budget),
             verify_timeout=verify_timeout,
             max_prover_attempts=max_prover_attempts,
@@ -313,7 +318,8 @@ class LeanDecomposeEnv(Environment):
                 plan_text=blueprint_text,
                 header_lines=config.header_lines,
                 prover=prover,
-                backend_url=config.backend_url,
+                verification_url=config.verification_url,
+                verification_key=config.verification_key,
                 verify_timeout=config.verify_timeout,
                 max_prover_attempts=config.max_prover_attempts,
                 session_id=config.session_id,

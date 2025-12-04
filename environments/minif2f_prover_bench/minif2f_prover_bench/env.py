@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import asyncio
 from dataclasses import dataclass
 from typing import Any
 import os
@@ -12,7 +13,7 @@ from verifiers.types import Messages, State, TrajectoryStep
 from openai import AsyncOpenAI
 
 from minif2f_decompose.lean_utils import inject_proof_body, lean_compile
-from minif2f_decompose.prover import OpenAIProver, ProverRequest
+from minif2f_decompose.prover import OpenAIProver, ProverRequest, ProverResult
 from .lean_utils import parse_theorem_signature
 
 
@@ -176,6 +177,12 @@ class ProverBenchEnv(Environment):
         config: BenchConfig,
         prover: OpenAIProver,
     ) -> tuple[bool, str, int]:
+        """Run prover attempts with streaming parallelism and early termination.
+
+        Maintains max_parallel_prover in-flight at all times. As each prover call
+        completes, immediately verify if successful. On first verified success,
+        cancel all remaining tasks and return.
+        """
         full_snippet = _join_header_and_snippet(config.header_lines, config.theorem_snippet)
         attempts = 0
         last_log = ""
@@ -185,17 +192,26 @@ class ProverBenchEnv(Environment):
         except Exception as exc:
             return False, f"Invalid theorem snippet: {exc}", attempts
 
-        for attempt in range(config.max_prover_attempts):
+        # Track state
+        success_found = False
+        success_detail = ""
+        pending_tasks: set[asyncio.Task] = set()
+        next_attempt_idx = 0
+
+        async def prove_and_verify_one(attempt_idx: int) -> tuple[bool, str, int]:
+            """Run one prover attempt and verify if successful. Returns (ok, log, attempts)."""
             req = ProverRequest(
                 theorem_snippet=full_snippet,
-                session_id=f"{config.session_id}-{attempt}",
+                session_id=f"{config.session_id}-{attempt_idx}",
             )
             result = await prover.prove(req, max_attempts=1)
-            attempts += result.attempts
-            last_log = result.log
+            log = result.log or ""
+
             body = (result.body or "").strip()
             if not result.success or not body:
-                continue
+                return False, log, result.attempts
+
+            # Got a proof body, verify it
             candidate = inject_proof_body(config.theorem_snippet, body)
             final_code = _join_header_and_snippet(config.header_lines, candidate) + "\n"
             compile_result = await lean_compile(
@@ -204,12 +220,60 @@ class ProverBenchEnv(Environment):
                 verification_key=config.verification_key,
                 timeout=config.verify_timeout,
                 allow_sorry=False,
-                snippet_id=f"{config.session_id}-attempt{attempt}",
+                snippet_id=f"{config.session_id}-attempt{attempt_idx}",
             )
+
             if compile_result.ok:
-                detail = f"Prover succeeded in {attempts} attempt(s)."
-                return True, detail, attempts
-            last_log = compile_result.log
+                return True, f"Prover succeeded at attempt {attempt_idx + 1}.", result.attempts
+            return False, compile_result.log or log, result.attempts
+
+        def spawn_next() -> asyncio.Task | None:
+            """Spawn the next prover task if attempts remain."""
+            nonlocal next_attempt_idx
+            if next_attempt_idx >= config.max_prover_attempts:
+                return None
+            idx = next_attempt_idx
+            next_attempt_idx += 1
+            task = asyncio.create_task(prove_and_verify_one(idx))
+            pending_tasks.add(task)
+            return task
+
+        # Initial burst: fill up to max_parallel_prover
+        for _ in range(min(config.max_parallel_prover, config.max_prover_attempts)):
+            spawn_next()
+
+        # Process as they complete
+        while pending_tasks and not success_found:
+            done, _ = await asyncio.wait(pending_tasks, return_when=asyncio.FIRST_COMPLETED)
+
+            for task in done:
+                pending_tasks.discard(task)
+                try:
+                    ok, log, task_attempts = task.result()
+                    attempts += task_attempts
+                    last_log = log or last_log
+
+                    if ok:
+                        success_found = True
+                        success_detail = log
+                        break
+                except asyncio.CancelledError:
+                    pass
+                except Exception as exc:
+                    last_log = f"Task error: {exc}"
+
+            # If not done, spawn replacement to keep pipeline full
+            if not success_found:
+                spawn_next()
+
+        # Cancel any remaining tasks
+        for task in pending_tasks:
+            task.cancel()
+        if pending_tasks:
+            await asyncio.gather(*pending_tasks, return_exceptions=True)
+
+        if success_found:
+            return True, success_detail, attempts
 
         detail = "Prover failed."
         if last_log:

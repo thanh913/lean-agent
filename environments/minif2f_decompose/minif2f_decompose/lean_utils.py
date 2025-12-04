@@ -96,8 +96,15 @@ async def lean_compile(
     allow_sorry: bool,
     snippet_id: str,
     verification_key: str = "",
+    client_timeout_buffer: int = 120,
+    max_retries: int = 2,
 ) -> LeanCompileResult:
-    """Submit `code` to the Lean service and return its response."""
+    """Submit `code` to the Lean service and return its response.
+
+    Args:
+        client_timeout_buffer: Extra seconds for client timeout to account for queue wait.
+        max_retries: Number of retries on timeout/connection errors.
+    """
 
     payload = {
         "snippets": [{"id": snippet_id, "code": code}],
@@ -106,7 +113,11 @@ async def lean_compile(
         "debug": False,
     }
 
-    def _post() -> LeanCompileResult:
+    # Client timeout = server timeout + buffer for queue wait
+    http_timeout = timeout + client_timeout_buffer
+
+    def _post() -> tuple[LeanCompileResult | None, bool]:
+        """Returns (result, should_retry). Result is None if should retry."""
         try:
             headers = {"Content-Type": "application/json"}
             if verification_key:
@@ -115,12 +126,18 @@ async def lean_compile(
                 verification_url.rstrip("/") + "/check",
                 json=payload,
                 headers=headers,
-                timeout=timeout + 5,
+                timeout=http_timeout,
             )
             response.raise_for_status()
             data = response.json()
+        except requests.exceptions.Timeout:
+            # Timeout is retryable (might be queue congestion)
+            return None, True
+        except requests.exceptions.ConnectionError:
+            # Connection error is retryable
+            return None, True
         except Exception as exc:  # pragma: no cover - network path
-            return LeanCompileResult(ok=False, log=f"Lean service error: {exc}", messages=[])
+            return LeanCompileResult(ok=False, log=f"Lean service error: {exc}", messages=[]), False
 
         result = (data.get("results") or [{}])[0]
         resp_payload = result.get("response") or {}
@@ -148,7 +165,20 @@ async def lean_compile(
                 f"ERROR (line {line}, col {col}): {msg.get('data', '')}"
             )
         log = "\n".join(filter(None, log_lines))
-        return LeanCompileResult(ok=ok, log=log, messages=messages)
+        return LeanCompileResult(ok=ok, log=log, messages=messages), False
 
     loop = asyncio.get_running_loop()
-    return await loop.run_in_executor(None, _post)
+
+    # Retry loop for transient failures (timeout, connection errors)
+    last_error = "Unknown error"
+    for attempt in range(max_retries + 1):
+        result, should_retry = await loop.run_in_executor(None, _post)
+        if result is not None:
+            return result
+        if not should_retry or attempt >= max_retries:
+            break
+        last_error = "Timeout or connection error"
+        # Brief backoff before retry
+        await asyncio.sleep(min(2 ** attempt, 10))
+
+    return LeanCompileResult(ok=False, log=f"Lean service error after {max_retries + 1} attempts: {last_error}", messages=[])

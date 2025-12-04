@@ -11,17 +11,21 @@ PROVER_BASE_URL="${PROVER_BASE_URL:-https://containers.datacrunch.io/deepseek-pr
 VERIFICATION_URL="${VERIFICATION_URL:-http://127.0.0.1:8000/api}"
 
 # --- Evaluation ---
-NUM=244
-ROLLOUTS=64
-CONC=122
+NUM=244                             # number of problems to evaluate
+ROLLOUTS=1                          # rollouts per problem
+CONC=244                            # concurrent problems (vf-eval level)
 
 # --- Prover sampling ---
 PROVER_MAX_COMPLETION_TOKENS=30000
 
-# --- Limits ---
+# --- Prover attempts (batch parallel) ---
+# For each problem, fire MAX_PARALLEL_PROVER attempts in parallel per batch.
+# Repeat batches until MAX_PROVER_ATTEMPTS exhausted or success.
+# Example: 64 attempts with 8 parallel = 8 batches of 8 attempts each.
+#          64 attempts with 64 parallel = 1 batch of 64 attempts (all at once).
 VERIFY_TIMEOUT=90
-MAX_PROVER_ATTEMPTS=48
-MAX_PARALLEL_PROVER=244
+MAX_PROVER_ATTEMPTS=128             # total attempts per problem
+MAX_PARALLEL_PROVER=64              # attempts per batch (fires all at once)
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")"/.. && pwd)"
 cd "$ROOT_DIR"

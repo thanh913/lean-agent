@@ -12,6 +12,7 @@ from verifiers.envs.environment import Environment
 from verifiers.types import Messages, State, TrajectoryStep
 from openai import AsyncOpenAI
 
+from minif2f_decompose.http_utils import create_httpx_client
 from minif2f_decompose.lean_utils import inject_proof_body, lean_compile
 from minif2f_decompose.prover import OpenAIProver, ProverRequest, ProverResult
 from .lean_utils import parse_theorem_signature
@@ -97,7 +98,12 @@ class ProverBenchEnv(Environment):
 
     def _build_prover(self, config: BenchConfig) -> OpenAIProver:
         prover_key = os.getenv(self.prover_api_key_env, "")
-        prover_client = AsyncOpenAI(api_key=prover_key, base_url=config.prover_base_url)
+        http_client = create_httpx_client()
+        prover_client = AsyncOpenAI(
+            api_key=prover_key,
+            base_url=config.prover_base_url,
+            http_client=http_client,
+        )
         return OpenAIProver(
             client=prover_client,
             model=config.prover_model,

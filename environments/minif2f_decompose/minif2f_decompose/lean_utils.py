@@ -10,6 +10,8 @@ import json
 import re
 import requests
 
+from .http_utils import get_proxy_dict, get_ssl_verify
+
 
 LEAN_FENCE = re.compile(r"```\s*lean4?\s*", re.IGNORECASE)
 GENERIC_FENCE = re.compile(r"```\s*[\w-]*\s*", re.IGNORECASE)
@@ -127,6 +129,8 @@ async def lean_compile(
                 json=payload,
                 headers=headers,
                 timeout=http_timeout,
+                proxies=get_proxy_dict(),
+                verify=get_ssl_verify(),
             )
             response.raise_for_status()
             data = response.json()

@@ -14,6 +14,7 @@ import verifiers as vf
 from verifiers.envs.environment import Environment
 from verifiers.types import Messages, State, TrajectoryStep
 
+from .http_utils import create_httpx_client
 from .proof_executor import ExecutionResult, execute_plan
 from .prover import OpenAIProver
 
@@ -229,7 +230,12 @@ class LeanDecomposeEnv(Environment):
 
     def _build_prover(self, config: RunConfig) -> OpenAIProver:
         prover_key = os.getenv(self.prover_api_key_env, "")
-        prover_client = AsyncOpenAI(api_key=prover_key, base_url=config.prover_base_url)
+        http_client = create_httpx_client()
+        prover_client = AsyncOpenAI(
+            api_key=prover_key,
+            base_url=config.prover_base_url,
+            http_client=http_client,
+        )
         return OpenAIProver(
             client=prover_client,
             model=config.prover_model,

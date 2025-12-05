@@ -328,6 +328,7 @@ class LeanDecomposeEnv(Environment):
                 verification_key=config.verification_key,
                 verify_timeout=config.verify_timeout,
                 max_prover_attempts=config.max_prover_attempts,
+                max_parallel_prover=config.max_parallel_prover,
                 session_id=config.session_id,
             )
             metrics.record_executor_result(result)

@@ -9,7 +9,7 @@ from dataclasses import dataclass
 from typing import Any, Iterable
 
 from .lean_utils import extract_last_lean_block, lean_compile
-from .prover import Prover, ProverRequest
+from .prover import Prover, ProverRequest, ProverResult
 
 
 DEFER_PRELUDE = """
@@ -404,6 +404,7 @@ async def _prove_single_task(
     verification_key: str,
     verify_timeout: int,
     max_prover_attempts: int,
+    max_parallel_prover: int,
     session_id: str,
 ) -> TaskOutcome:
     snippet_lines: list[str] = [*common_prefix, task.header]
@@ -419,37 +420,84 @@ async def _prove_single_task(
     total_completion_tokens = 0
     total_inference_ms = 0.0
     attempt_budget = max(1, max_prover_attempts)
-    for attempt in range(attempt_budget):
+    per_task_parallel = max(1, min(max_parallel_prover, attempt_budget))
+    next_attempt_idx = 0
+    pending: set[asyncio.Task] = set()
+
+    async def run_attempt(attempt_idx: int) -> tuple[int, ProverResult]:
         request = ProverRequest(
             theorem_snippet=snippet,
-            session_id=f"{session_id}-task{idx}-attempt{attempt}",
+            session_id=f"{session_id}-task{idx}-attempt{attempt_idx}",
         )
         result = await prover.prove(request, max_attempts=1)
-        total_attempts += result.attempts
-        total_prompt_tokens += getattr(result, "prompt_tokens", 0) or 0
-        total_completion_tokens += getattr(result, "completion_tokens", 0) or 0
-        total_inference_ms += float(getattr(result, "inference_ms", 0.0) or 0.0)
-        candidate_body = (result.body or "").strip()
-        if not result.success or not candidate_body:
-            last_log = result.log
-            continue
-        body_lines = [f"  {line}" if line else "" for line in task.prelude_lines]
-        body_lines.extend(f"  {line}" if line else "" for line in candidate_body.splitlines())
-        candidate_code = "\n".join([*common_prefix, task.header, *body_lines]) + "\n"
-        compile_result = await lean_compile(
-            code=candidate_code,
-            verification_url=verification_url,
-            verification_key=verification_key,
-            timeout=verify_timeout,
-            allow_sorry=False,
-            snippet_id=f"{session_id}-task{idx}-attempt{attempt}",
-        )
-        if compile_result.ok:
-            merged_lines = task.prelude_lines + candidate_body.splitlines()
-            body = "\n".join(merged_lines)
-            last_log = ""
-            break
-        last_log = compile_result.log
+        return attempt_idx, result
+
+    def spawn_next() -> None:
+        nonlocal next_attempt_idx
+        if next_attempt_idx >= attempt_budget:
+            return
+        attempt_idx = next_attempt_idx
+        next_attempt_idx += 1
+        pending.add(asyncio.create_task(run_attempt(attempt_idx)))
+
+    for _ in range(per_task_parallel):
+        spawn_next()
+
+    try:
+        while pending and body is None:
+            done, _ = await asyncio.wait(pending, return_when=asyncio.FIRST_COMPLETED)
+            done_tasks = list(done)
+            for task_handle in done_tasks:
+                pending.discard(task_handle)
+            for task_handle in done_tasks:
+                try:
+                    attempt_idx, result = task_handle.result()
+                except asyncio.CancelledError:
+                    continue
+                except Exception as exc:  # pragma: no cover - defensive guard
+                    last_log = f"Task error: {exc}"
+                    continue
+
+                total_attempts += result.attempts
+                total_prompt_tokens += getattr(result, "prompt_tokens", 0) or 0
+                total_completion_tokens += getattr(result, "completion_tokens", 0) or 0
+                total_inference_ms += float(getattr(result, "inference_ms", 0.0) or 0.0)
+
+                candidate_body = (result.body or "").strip()
+                if body is not None:
+                    continue
+                if not result.success or not candidate_body:
+                    last_log = result.log
+                    continue
+
+                body_lines = [f"  {line}" if line else "" for line in task.prelude_lines]
+                body_lines.extend(f"  {line}" if line else "" for line in candidate_body.splitlines())
+                candidate_code = "\n".join([*common_prefix, task.header, *body_lines]) + "\n"
+                compile_result = await lean_compile(
+                    code=candidate_code,
+                    verification_url=verification_url,
+                    verification_key=verification_key,
+                    timeout=verify_timeout,
+                    allow_sorry=False,
+                    snippet_id=f"{session_id}-task{idx}-attempt{attempt_idx}",
+                )
+                if compile_result.ok:
+                    merged_lines = task.prelude_lines + candidate_body.splitlines()
+                    body = "\n".join(merged_lines)
+                    last_log = ""
+                    continue
+                last_log = compile_result.log
+
+            if body is not None:
+                break
+
+            while len(pending) < per_task_parallel and next_attempt_idx < attempt_budget:
+                spawn_next()
+    finally:
+        for task_handle in pending:
+            task_handle.cancel()
+        if pending:
+            await asyncio.gather(*pending, return_exceptions=True)
     return TaskOutcome(
         idx=idx,
         attempts=total_attempts,
@@ -474,6 +522,7 @@ async def execute_plan(
     verification_key: str,
     verify_timeout: int,
     max_prover_attempts: int,
+    max_parallel_prover: int,
     session_id: str,
 ) -> ExecutionResult:
     """Compile the planner blueprint, solve its subgoals, and track prover stats."""
@@ -565,6 +614,7 @@ async def execute_plan(
                 verification_key=verification_key,
                 verify_timeout=verify_timeout,
                 max_prover_attempts=max_prover_attempts,
+                max_parallel_prover=max_parallel_prover,
                 session_id=session_id,
             )
         )

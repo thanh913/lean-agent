@@ -14,15 +14,15 @@ PROVER_BASE_URL="${PROVER_BASE_URL:-https://containers.datacrunch.io/deepseek-pr
 VERIFICATION_URL="${VERIFICATION_URL:-http://127.0.0.1:8000/api}"
 
 # --- Evaluation ---
-NUM=244                           # number of problems
+NUM=1                           # number of problems
 ROLLOUTS=1                       # rollouts per problem
-CONC=244                          # concurrency
+CONC=1                          # concurrency
 
 # --- Prover sampling (OpenAI-compatible) ---
 PROVER_MAX_COMPLETION_TOKENS=30000
 
 # --- Environment args ---
-PLANNER_BUDGET=6                # planner attempts per problem (minimal)
+PLANNER_BUDGET=1                # planner attempts per problem (minimal)
 VERIFY_TIMEOUT=90               # Lean compile timeout (seconds)
 MAX_PROVER_ATTEMPTS=4           # direct attempts per subgoal
 MAX_PARALLEL_PROVER=310         # global cap on concurrent prover calls

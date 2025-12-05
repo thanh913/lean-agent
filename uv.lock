@@ -1,5 +1,5 @@
 version = 1
-revision = 2
+revision = 3
 requires-python = ">=3.12"
 resolution-markers = [
     "sys_platform == 'linux'",
@@ -984,7 +984,7 @@ requires-dist = [
 [[package]]
 name = "minif2f-prover-bench"
 version = "0.0.0"
-source = { virtual = "environments/minif2f_prover_bench" }
+source = { editable = "environments/minif2f_prover_bench" }
 dependencies = [
     { name = "minif2f-decompose" },
     { name = "verifiers" },

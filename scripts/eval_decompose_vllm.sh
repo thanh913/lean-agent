@@ -15,7 +15,7 @@ VERIFICATION_URL="${VERIFICATION_URL:-http://127.0.0.1:8000/api}"
 
 # --- Evaluation ---
 NUM=1                           # number of problems
-ROLLOUTS=1                       # rollouts per problem
+ROLLOUTS=1                      # rollouts per problem
 CONC=1                          # concurrency
 
 # --- Prover sampling (OpenAI-compatible) ---

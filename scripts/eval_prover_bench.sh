@@ -13,7 +13,7 @@ VERIFICATION_URL="${VERIFICATION_URL:-http://127.0.0.1:8000/api}"
 # --- Evaluation ---
 NUM=244                             # number of problems to evaluate
 ROLLOUTS=1                          # rollouts per problem
-CONC=244                            # concurrent problems (vf-eval level)
+CONC=2                            # concurrent problems (vf-eval level)
 
 # --- Prover sampling ---
 PROVER_MAX_COMPLETION_TOKENS=30000

@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-# Minimal evaluator for MiniF2F DecomposeEnv.
-# Edit the variables below instead of passing CLI args.
+# Evaluator for MiniF2F DecomposeEnv - IMO problems only.
+# Filters to imo_* and imosl_* problems (20 total).
 set -euo pipefail
 
 # Load config from .env (keys, URLs, model settings)
@@ -13,10 +13,10 @@ PROVER_MODEL="${PROVER_MODEL:-deepseek-ai/DeepSeek-Prover-V2-7B}"
 PROVER_BASE_URL="${PROVER_BASE_URL:-https://containers.datacrunch.io/deepseek-prover-v2-7b/v1}"
 VERIFICATION_URL="${VERIFICATION_URL:-http://127.0.0.1:8000/api}"
 
-# --- Evaluation ---
-NUM=96                           # number of problems
+# --- Evaluation (IMO subset: 20 problems) ---
+NUM=20                           # all IMO problems
 ROLLOUTS=1                      # rollouts per problem
-CONC=96                          # concurrency
+CONC=20                          # concurrency
 
 # --- Prover sampling (OpenAI-compatible) ---
 PROVER_TEMP=0.7
@@ -24,13 +24,13 @@ PROVER_TOP_P=0.9
 PROVER_MAX_COMPLETION_TOKENS=30000
 
 # --- Environment args ---
-PLANNER_BUDGET=24                # planner attempts per problem (minimal)
+PLANNER_BUDGET=24                # planner attempts per problem
 VERIFY_TIMEOUT=90               # Lean compile timeout (seconds)
-MAX_PROVER_ATTEMPTS=16          # direct attempts per subgoal
-STAGGER_DELAY=30                # seconds between starting attempts
-MAX_PARALLEL_PROVER=400         # global cap on concurrent prover calls
+MAX_PROVER_ATTEMPTS=4          # direct attempts per subgoal
+STAGGER_DELAY=20                # seconds between starting attempts
+MAX_PARALLEL_PROVER=200         # global cap on concurrent prover calls
 
-# --- Planner sampling (planner only; prover sampling is hard-coded in env) ---
+# --- Planner sampling ---
 PLANNER_TEMP=0.7
 PLANNER_TOP_P=0.9
 PLANNER_MAX_TOKENS=200000
@@ -39,7 +39,7 @@ PLANNER_MAX_TOKENS=200000
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")"/.. && pwd)"
 cd "$ROOT_DIR"
 
-# Build env args JSON
+# Build env args JSON (with IMO filter)
 ENV_ARGS=$(cat <<JSON
 {
   "verification_url": "$VERIFICATION_URL",
@@ -53,6 +53,7 @@ ENV_ARGS=$(cat <<JSON
   "prover_api_key_env": "PROVER_KEY",
   "shuffle": true,
   "shuffle_seed": 42,
+  "filter_prefixes": ["imo_", "imosl_"],
   "prover_sampling": {
     "temperature": $PROVER_TEMP,
     "top_p": $PROVER_TOP_P,

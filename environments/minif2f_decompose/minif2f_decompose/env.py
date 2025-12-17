@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import asyncio
 import os
 import time
 from dataclasses import dataclass
@@ -33,6 +34,7 @@ class RunConfig:
     verify_timeout: int
     max_prover_attempts: int
     max_parallel_prover: int
+    stagger_delay: float
     prover_model: str
     prover_base_url: str | None
     prover_sampling: dict[str, Any]
@@ -206,6 +208,7 @@ class LeanDecomposeEnv(Environment):
         planner_budget: int = 1,
         verify_timeout: int = 60,
         max_prover_attempts: int = 2,
+        stagger_delay: float = 60.0,
         prover_model: str = "",
         prover_base_url: str | None = None,
         prover_api_key_env: str = "OPENAI_API_KEY",
@@ -219,11 +222,20 @@ class LeanDecomposeEnv(Environment):
         self.planner_budget = planner_budget
         self.verify_timeout = verify_timeout
         self.max_prover_attempts = max_prover_attempts
+        self.stagger_delay = stagger_delay
         self.prover_model = prover_model
         self.prover_base_url = prover_base_url
         self.prover_api_key_env = prover_api_key_env
         self.max_parallel_prover = max_parallel_prover
         self.prover_sampling = prover_sampling or {}
+        # Shared semaphore for prover concurrency across all rollouts
+        # Created eagerly to avoid any race conditions
+        self._prover_semaphore = asyncio.Semaphore(max(1, max_parallel_prover))
+        # Track how many env instances are created (should be exactly 1!)
+        if not hasattr(LeanDecomposeEnv, '_instance_count'):
+            LeanDecomposeEnv._instance_count = 0
+        LeanDecomposeEnv._instance_count += 1
+        print(f"[ENV #{LeanDecomposeEnv._instance_count}] Created prover semaphore with max_parallel={max_parallel_prover}")
 
     def _build_run_config(self, info: dict[str, Any]) -> RunConfig:
         """Build run configuration from instance defaults and per-example info."""
@@ -243,6 +255,7 @@ class LeanDecomposeEnv(Environment):
             max_parallel_prover=max(
                 1, int(info.get("max_parallel_prover", self.max_parallel_prover) or 1)
             ),
+            stagger_delay=float(info.get("stagger_delay", self.stagger_delay)),
             prover_model=str(info.get("prover_model", self.prover_model)).strip(),
             prover_base_url=str(
                 info.get("prover_base_url", self.prover_base_url) or ""
@@ -252,8 +265,18 @@ class LeanDecomposeEnv(Environment):
             session_id=str(info.get("session_id") or "plan"),
         )
 
-    def _build_prover_llm(self, config: RunConfig) -> LLMClient:
-        """Build LLM client for the prover."""
+    def _get_prover_semaphore(self) -> asyncio.Semaphore:
+        """Get the shared prover semaphore (created in __init__)."""
+        return self._prover_semaphore
+
+    def _build_prover_llm(self, config: RunConfig) -> tuple[LLMClient, "httpx.AsyncClient"]:
+        """Build LLM client for the prover.
+
+        Returns:
+            Tuple of (LLMClient, httpx.AsyncClient). Caller must close the httpx client.
+        """
+        import httpx  # for type hint
+
         prover_key = os.getenv(self.prover_api_key_env, "")
         http_client = create_httpx_client()
         openai_client = AsyncOpenAI(
@@ -261,11 +284,15 @@ class LeanDecomposeEnv(Environment):
             base_url=config.prover_base_url,
             http_client=http_client,
         )
-        return LLMClient(
+        # Use shared semaphore across all rollouts for global concurrency control
+        shared_sem = self._get_prover_semaphore()
+        llm_client = LLMClient(
             openai_client,
-            max_parallel=config.max_parallel_prover,
             max_retries=0,  # Retry handled at task level
+            semaphore=shared_sem,
+            track_concurrency=True,  # Debug: track prover concurrency
         )
+        return llm_client, http_client
 
     def _build_lean_client(self, config: RunConfig) -> LeanClient:
         """Build Lean compilation client."""
@@ -316,82 +343,86 @@ class LeanDecomposeEnv(Environment):
 
         # Build clients
         planner_llm = LLMClient(client, max_parallel=1)  # Planner is sequential
-        prover_llm = self._build_prover_llm(config)
+        prover_llm, prover_http_client = self._build_prover_llm(config)
         lean = self._build_lean_client(config)
 
-        executor = ProofExecutor(
-            prover_llm,
-            lean,
-            ExecutorConfig(
-                prover_model=config.prover_model,
-                prover_sampling=config.prover_sampling,
-                verify_timeout=config.verify_timeout,
-                max_prover_attempts=config.max_prover_attempts,
-                session_id=config.session_id,
-            ),
-        )
-
-        metrics = Metrics()
-        transcript: list[dict[str, str]] = list(prompt)
-        original_prompt_len = len(transcript)
-
-        # Main planner loop
-        for turn in range(config.planner_budget):
-            before_call = list(transcript)
-
-            # 1. Call planner
-            response = await planner_llm.call(
-                model=model,
-                messages=transcript,
-                request_id=f"{config.session_id}-planner-{turn}",
-                **(sampling_args or {}),
-            )
-            content = _fix_blueprint_tag(response.content)
-            transcript.append({"role": "assistant", "content": content})
-            metrics.record_planner(
-                response.prompt_tokens,
-                response.completion_tokens,
-                response.latency_ms,
+        try:
+            executor = ProofExecutor(
+                prover_llm,
+                lean,
+                ExecutorConfig(
+                    prover_model=config.prover_model,
+                    prover_sampling=config.prover_sampling,
+                    verify_timeout=config.verify_timeout,
+                    max_prover_attempts=config.max_prover_attempts,
+                    session_id=config.session_id,
+                    stagger_delay=config.stagger_delay,
+                ),
             )
 
-            if len(transcript) > len(before_call):
-                _record_step(state, before_call, [transcript[-1]], "planner")
+            metrics = Metrics()
+            transcript: list[dict[str, str]] = list(prompt)
+            original_prompt_len = len(transcript)
 
-            state["plan_text"] = content
+            # Main planner loop
+            for turn in range(config.planner_budget):
+                before_call = list(transcript)
 
-            # 2. Extract blueprint
-            blueprint = _extract_blueprint(content)
-            if not blueprint:
-                rejection = _rejection_message()
+                # 1. Call planner
+                response = await planner_llm.call(
+                    model=model,
+                    messages=transcript,
+                    request_id=f"{config.session_id}-planner-{turn}",
+                    **(sampling_args or {}),
+                )
+                content = _fix_blueprint_tag(response.content)
+                transcript.append({"role": "assistant", "content": content})
+                metrics.record_planner(
+                    response.prompt_tokens,
+                    response.completion_tokens,
+                    response.latency_ms,
+                )
+
+                if len(transcript) > len(before_call):
+                    _record_step(state, before_call, [transcript[-1]], "planner")
+
+                state["plan_text"] = content
+
+                # 2. Extract blueprint
+                blueprint = _extract_blueprint(content)
+                if not blueprint:
+                    rejection = _rejection_message()
+                    history_before = list(transcript)
+                    transcript.append(rejection)
+                    _record_step(state, history_before, [rejection], "plan_invalid")
+                    state["execution_summary"] = rejection["content"]
+                    continue
+
+                # 3. Execute blueprint
+                result = await executor.execute(blueprint, config.header_lines)
+                metrics.record_execution(result)
+
+                # 4. Format and append feedback
+                feedback_content = _format_executor_feedback(result)
+                feedback_msg = {"role": "user", "content": feedback_content}
                 history_before = list(transcript)
-                transcript.append(rejection)
-                _record_step(state, history_before, [rejection], "plan_invalid")
-                state["execution_summary"] = rejection["content"]
-                continue
+                transcript.append(feedback_msg)
+                _record_step(state, history_before, [feedback_msg], "executor_feedback")
+                state["execution_summary"] = feedback_content
 
-            # 3. Execute blueprint
-            result = await executor.execute(blueprint, config.header_lines)
-            metrics.record_execution(result)
+                if result.success:
+                    break
 
-            # 4. Format and append feedback
-            feedback_content = _format_executor_feedback(result)
-            feedback_msg = {"role": "user", "content": feedback_content}
-            history_before = list(transcript)
-            transcript.append(feedback_msg)
-            _record_step(state, history_before, [feedback_msg], "executor_feedback")
-            state["execution_summary"] = feedback_content
+            # Finalize state
+            state["completion"] = transcript[original_prompt_len:]
+            metrics.write_to_state(state)
 
-            if result.success:
-                break
+            elapsed_ms = (time.time() - state["timing"]["start_time"]) * 1000
+            state["timing"]["generation_ms"] = elapsed_ms
+            state["timing"]["total_ms"] = elapsed_ms
+            state["is_completed"] = True
+            state["stop_condition"] = "finished"
 
-        # Finalize state
-        state["completion"] = transcript[original_prompt_len:]
-        metrics.write_to_state(state)
-
-        elapsed_ms = (time.time() - state["timing"]["start_time"]) * 1000
-        state["timing"]["generation_ms"] = elapsed_ms
-        state["timing"]["total_ms"] = elapsed_ms
-        state["is_completed"] = True
-        state["stop_condition"] = "finished"
-
-        return state
+            return state
+        finally:
+            await prover_http_client.aclose()

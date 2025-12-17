@@ -72,6 +72,10 @@ class LLMResponse:
 class LLMClient:
     """Unified LLM API wrapper with concurrency control and retry."""
 
+    # Class-level counter for debugging concurrent requests (prover only)
+    _prover_active = 0
+    _prover_max_seen = 0
+
     def __init__(
         self,
         client: AsyncOpenAI,
@@ -79,13 +83,17 @@ class LLMClient:
         max_parallel: int = 8,
         max_retries: int = 0,
         retry_delay: float = 1.0,
+        semaphore: asyncio.Semaphore | None = None,
+        track_concurrency: bool = False,  # Only enable for prover
     ) -> None:
         self._client = client
-        self._sem = asyncio.Semaphore(max(1, max_parallel))
+        # Use provided semaphore or create a new one
+        self._sem = semaphore if semaphore is not None else asyncio.Semaphore(max(1, max_parallel))
         self._max_retries = max_retries
         self._retry_delay = retry_delay
         self._total_calls = 0
         self._failed_calls = 0
+        self._track_concurrency = track_concurrency
 
     async def call(
         self,
@@ -93,12 +101,34 @@ class LLMClient:
         model: str,
         messages: list[dict[str, str]],
         request_id: str = "",
+        started_event: asyncio.Event | None = None,
         **sampling: Any,
     ) -> LLMResponse:
-        """Call the LLM with concurrency control."""
+        """Call the LLM with concurrency control.
+
+        Args:
+            model: Model identifier
+            messages: Chat messages
+            request_id: Optional request ID for logging
+            started_event: Optional event to set when semaphore is acquired
+                          (signals that execution has actually started)
+            **sampling: Additional sampling parameters
+        """
         async with self._sem:
+            # Signal that we've acquired the semaphore (actually started)
+            if started_event is not None:
+                started_event.set()
+            if self._track_concurrency:
+                LLMClient._prover_active += 1
+                if LLMClient._prover_active > LLMClient._prover_max_seen:
+                    LLMClient._prover_max_seen = LLMClient._prover_active
+                    print(f"[PROVER] New max concurrent: {LLMClient._prover_max_seen}")
             self._total_calls += 1
-            return await self._call_with_retry(model, messages, sampling)
+            try:
+                return await self._call_with_retry(model, messages, sampling)
+            finally:
+                if self._track_concurrency:
+                    LLMClient._prover_active -= 1
 
     async def _call_with_retry(
         self,

@@ -1,0 +1,1487 @@
+{
+  "config": {
+    "dataset": "AI-MO/minif2f_test",
+    "split": "train",
+    "limit": 244,
+    "model": "deepseek-ai/DeepSeek-Prover-V2-7B",
+    "temperature": 0.7,
+    "top_p": 0.9,
+    "max_tokens": 30000,
+    "max_attempts": 16
+  },
+  "summary": {
+    "total": 244,
+    "solved": 183,
+    "failed": 61,
+    "pass_rate": 0.75,
+    "total_attempts": 1310,
+    "total_latency_s": 112718.42822289467,
+    "wall_time_s": 2678.8643832206726
+  },
+  "problems": [
+    {
+      "name": "mathd_algebra_478",
+      "success": true,
+      "attempts": 1,
+      "latency_ms": 22339.216947555542
+    },
+    {
+      "name": "numbertheory_4x3m7y3neq2003",
+      "success": true,
+      "attempts": 1,
+      "latency_ms": 23595.537900924683
+    },
+    {
+      "name": "aime_1983_p1",
+      "success": true,
+      "attempts": 7,
+      "latency_ms": 67127.84481048584
+    },
+    {
+      "name": "amc12_2001_p5",
+      "success": false,
+      "attempts": 16,
+      "latency_ms": 151221.01521492004
+    },
+    {
+      "name": "mathd_algebra_141",
+      "success": true,
+      "attempts": 1,
+      "latency_ms": 22249.166250228882
+    },
+    {
+      "name": "mathd_numbertheory_3",
+      "success": true,
+      "attempts": 1,
+      "latency_ms": 23230.578899383545
+    },
+    {
+      "name": "imo_1969_p2",
+      "success": false,
+      "attempts": 16,
+      "latency_ms": 153938.57192993164
+    },
+    {
+      "name": "mathd_algebra_209",
+      "success": true,
+      "attempts": 1,
+      "latency_ms": 44349.97010231018
+    },
+    {
+      "name": "mathd_numbertheory_1124",
+      "success": true,
+      "attempts": 1,
+      "latency_ms": 41554.19969558716
+    },
+    {
+      "name": "imo_1983_p6",
+      "success": true,
+      "attempts": 1,
+      "latency_ms": 60158.599853515625
+    },
+    {
+      "name": "mathd_numbertheory_237",
+      "success": true,
+      "attempts": 1,
+      "latency_ms": 48394.64092254639
+    },
+    {
+      "name": "mathd_algebra_33",
+      "success": true,
+      "attempts": 1,
+      "latency_ms": 88706.91394805908
+    },
+    {
+      "name": "amc12b_2021_p3",
+      "success": true,
+      "attempts": 5,
+      "latency_ms": 128437.36982345581
+    },
+    {
+      "name": "mathd_numbertheory_299",
+      "success": true,
+      "attempts": 1,
+      "latency_ms": 109097.2809791565
+    },
+    {
+      "name": "amc12b_2020_p2",
+      "success": true,
+      "attempts": 1,
+      "latency_ms": 114582.42297172546
+    },
+    {
+      "name": "algebra_sqineq_unitcircatbpabsamblt1",
+      "success": true,
+      "attempts": 1,
+      "latency_ms": 138729.68983650208
+    },
+    {
+      "name": "imo_1977_p6",
+      "success": true,
+      "attempts": 13,
+      "latency_ms": 196372.64013290405
+    },
+    {
+      "name": "mathd_algebra_419",
+      "success": true,
+      "attempts": 1,
+      "latency_ms": 133855.74913024902
+    },
+    {
+      "name": "amc12a_2020_p10",
+      "success": false,
+      "attempts": 16,
+      "latency_ms": 251670.98903656006
+    },
+    {
+      "name": "imo_1960_p2",
+      "success": false,
+      "attempts": 16,
+      "latency_ms": 272840.5530452728
+    },
+    {
+      "name": "mathd_numbertheory_427",
+      "success": false,
+      "attempts": 16,
+      "latency_ms": 279256.71124458313
+    },
+    {
+      "name": "numbertheory_x5neqy2p4",
+      "success": true,
+      "attempts": 1,
+      "latency_ms": 192493.8669204712
+    },
+    {
+      "name": "imosl_2007_algebra_p6",
+      "success": false,
+      "attempts": 16,
+      "latency_ms": 289605.7641506195
+    },
+    {
+      "name": "mathd_algebra_398",
+      "success": true,
+      "attempts": 1,
+      "latency_ms": 164466.97402000427
+    },
+    {
+      "name": "imo_1963_p5",
+      "success": true,
+      "attempts": 1,
+      "latency_ms": 200291.2881374359
+    },
+    {
+      "name": "mathd_numbertheory_430",
+      "success": true,
+      "attempts": 1,
+      "latency_ms": 196092.9660797119
+    },
+    {
+      "name": "mathd_algebra_459",
+      "success": true,
+      "attempts": 4,
+      "latency_ms": 230563.29703330994
+    },
+    {
+      "name": "induction_12dvd4expnp1p20",
+      "success": true,
+      "attempts": 1,
+      "latency_ms": 202778.50127220154
+    },
+    {
+      "name": "mathd_algebra_320",
+      "success": false,
+      "attempts": 16,
+      "latency_ms": 351103.28912734985
+    },
+    {
+      "name": "mathd_algebra_137",
+      "success": true,
+      "attempts": 1,
+      "latency_ms": 226160.57085990906
+    },
+    {
+      "name": "imo_1997_p5",
+      "success": false,
+      "attempts": 16,
+      "latency_ms": 364780.88188171387
+    },
+    {
+      "name": "mathd_numbertheory_277",
+      "success": true,
+      "attempts": 1,
+      "latency_ms": 240874.17030334473
+    },
+    {
+      "name": "mathd_numbertheory_559",
+      "success": true,
+      "attempts": 1,
+      "latency_ms": 263124.09114837646
+    },
+    {
+      "name": "mathd_algebra_160",
+      "success": true,
+      "attempts": 1,
+      "latency_ms": 250391.49689674377
+    },
+    {
+      "name": "mathd_algebra_24",
+      "success": true,
+      "attempts": 1,
+      "latency_ms": 264032.52506256104
+    },
+    {
+      "name": "mathd_algebra_176",
+      "success": true,
+      "attempts": 1,
+      "latency_ms": 266582.0207595825
+    },
+    {
+      "name": "induction_nfactltnexpnm1ngt3",
+      "success": false,
+      "attempts": 16,
+      "latency_ms": 413932.8877925873
+    },
+    {
+      "name": "mathd_algebra_208",
+      "success": true,
+      "attempts": 2,
+      "latency_ms": 278957.6210975647
+    },
+    {
+      "name": "mathd_numbertheory_353",
+      "success": false,
+      "attempts": 16,
+      "latency_ms": 404083.53877067566
+    },
+    {
+      "name": "numbertheory_notequiv2i2jasqbsqdiv8",
+      "success": true,
+      "attempts": 3,
+      "latency_ms": 349904.4358730316
+    },
+    {
+      "name": "mathd_algebra_156",
+      "success": true,
+      "attempts": 1,
+      "latency_ms": 356301.99670791626
+    },
+    {
+      "name": "mathd_numbertheory_12",
+      "success": true,
+      "attempts": 1,
+      "latency_ms": 304557.3239326477
+    },
+    {
+      "name": "mathd_numbertheory_345",
+      "success": true,
+      "attempts": 1,
+      "latency_ms": 307039.96324539185
+    },
+    {
+      "name": "mathd_numbertheory_447",
+      "success": true,
+      "attempts": 1,
+      "latency_ms": 327017.8327560425
+    },
+    {
+      "name": "mathd_numbertheory_328",
+      "success": true,
+      "attempts": 1,
+      "latency_ms": 335775.29096603394
+    },
+    {
+      "name": "mathd_numbertheory_451",
+      "success": false,
+      "attempts": 16,
+      "latency_ms": 477883.83078575134
+    },
+    {
+      "name": "aime_1997_p9",
+      "success": false,
+      "attempts": 16,
+      "latency_ms": 486481.0471534729
+    },
+    {
+      "name": "algebra_sqineq_at2malt1",
+      "success": true,
+      "attempts": 1,
+      "latency_ms": 342658.9071750641
+    },
+    {
+      "name": "algebra_apbmpcneq0_aeq0anbeq0anceq0",
+      "success": true,
+      "attempts": 9,
+      "latency_ms": 424471.45318984985
+    },
+    {
+      "name": "mathd_algebra_171",
+      "success": true,
+      "attempts": 1,
+      "latency_ms": 325939.8241043091
+    },
+    {
+      "name": "mathd_numbertheory_227",
+      "success": false,
+      "attempts": 16,
+      "latency_ms": 477469.77496147156
+    },
+    {
+      "name": "mathd_algebra_188",
+      "success": true,
+      "attempts": 1,
+      "latency_ms": 380409.95717048645
+    },
+    {
+      "name": "mathd_numbertheory_765",
+      "success": true,
+      "attempts": 2,
+      "latency_ms": 404957.2741985321
+    },
+    {
+      "name": "imo_1959_p1",
+      "success": true,
+      "attempts": 1,
+      "latency_ms": 397108.57605934143
+    },
+    {
+      "name": "mathd_numbertheory_175",
+      "success": true,
+      "attempts": 1,
+      "latency_ms": 399043.9717769623
+    },
+    {
+      "name": "induction_sumkexp3eqsumksq",
+      "success": false,
+      "attempts": 16,
+      "latency_ms": 488603.86872291565
+    },
+    {
+      "name": "numbertheory_fxeq4powxp6powxp9powx_f2powmdvdf2pown",
+      "success": false,
+      "attempts": 16,
+      "latency_ms": 530188.581943512
+    },
+    {
+      "name": "imo_1992_p1",
+      "success": true,
+      "attempts": 2,
+      "latency_ms": 487764.1558647156
+    },
+    {
+      "name": "imo_1982_p1",
+      "success": false,
+      "attempts": 16,
+      "latency_ms": 489184.51404571533
+    },
+    {
+      "name": "aime_1987_p5",
+      "success": false,
+      "attempts": 16,
+      "latency_ms": 504988.76786231995
+    },
+    {
+      "name": "mathd_algebra_346",
+      "success": true,
+      "attempts": 1,
+      "latency_ms": 366447.31998443604
+    },
+    {
+      "name": "mathd_algebra_487",
+      "success": true,
+      "attempts": 1,
+      "latency_ms": 412886.9597911835
+    },
+    {
+      "name": "mathd_numbertheory_728",
+      "success": true,
+      "attempts": 1,
+      "latency_ms": 377609.45892333984
+    },
+    {
+      "name": "mathd_algebra_184",
+      "success": true,
+      "attempts": 1,
+      "latency_ms": 393862.2508049011
+    },
+    {
+      "name": "mathd_numbertheory_552",
+      "success": false,
+      "attempts": 16,
+      "latency_ms": 567834.3620300293
+    },
+    {
+      "name": "amc12b_2021_p9",
+      "success": true,
+      "attempts": 3,
+      "latency_ms": 436638.08703422546
+    },
+    {
+      "name": "aime_1994_p3",
+      "success": true,
+      "attempts": 1,
+      "latency_ms": 439895.690202713
+    },
+    {
+      "name": "mathd_algebra_44",
+      "success": true,
+      "attempts": 1,
+      "latency_ms": 397035.4130268097
+    },
+    {
+      "name": "mathd_algebra_215",
+      "success": true,
+      "attempts": 1,
+      "latency_ms": 410553.51185798645
+    },
+    {
+      "name": "mathd_numbertheory_293",
+      "success": true,
+      "attempts": 1,
+      "latency_ms": 416759.17196273804
+    },
+    {
+      "name": "mathd_numbertheory_769",
+      "success": true,
+      "attempts": 1,
+      "latency_ms": 418768.7990665436
+    },
+    {
+      "name": "mathd_algebra_452",
+      "success": true,
+      "attempts": 1,
+      "latency_ms": 417255.4371356964
+    },
+    {
+      "name": "mathd_numbertheory_5",
+      "success": true,
+      "attempts": 1,
+      "latency_ms": 417574.33128356934
+    },
+    {
+      "name": "mathd_numbertheory_207",
+      "success": true,
+      "attempts": 1,
+      "latency_ms": 393651.38721466064
+    },
+    {
+      "name": "mathd_numbertheory_342",
+      "success": true,
+      "attempts": 1,
+      "latency_ms": 385794.5411205292
+    },
+    {
+      "name": "mathd_numbertheory_483",
+      "success": true,
+      "attempts": 7,
+      "latency_ms": 417391.21317863464
+    },
+    {
+      "name": "amc12b_2020_p21",
+      "success": false,
+      "attempts": 16,
+      "latency_ms": 522232.35392570496
+    },
+    {
+      "name": "amc12a_2003_p5",
+      "success": true,
+      "attempts": 1,
+      "latency_ms": 409678.9960861206
+    },
+    {
+      "name": "mathd_numbertheory_495",
+      "success": false,
+      "attempts": 16,
+      "latency_ms": 527780.7359695435
+    },
+    {
+      "name": "mathd_algebra_296",
+      "success": true,
+      "attempts": 1,
+      "latency_ms": 440514.8186683655
+    },
+    {
+      "name": "algebra_abpbcpcageq3_sumaonsqrtapbgeq3onsqrt2",
+      "success": false,
+      "attempts": 16,
+      "latency_ms": 543215.1570320129
+    },
+    {
+      "name": "algebra_2varlineareq_fp3zeq11_3tfm1m5zeqn68_feqn10_zeq7",
+      "success": true,
+      "attempts": 1,
+      "latency_ms": 404790.9617424011
+    },
+    {
+      "name": "mathd_numbertheory_247",
+      "success": true,
+      "attempts": 1,
+      "latency_ms": 395972.7637767792
+    },
+    {
+      "name": "induction_pord1p1on2powklt5on2",
+      "success": false,
+      "attempts": 16,
+      "latency_ms": 530308.5811138153
+    },
+    {
+      "name": "mathd_algebra_107",
+      "success": true,
+      "attempts": 1,
+      "latency_ms": 386758.86583328247
+    },
+    {
+      "name": "numbertheory_2pownm1prime_nprime",
+      "success": true,
+      "attempts": 2,
+      "latency_ms": 410886.6150379181
+    },
+    {
+      "name": "mathd_algebra_412",
+      "success": true,
+      "attempts": 1,
+      "latency_ms": 385596.4548587799
+    },
+    {
+      "name": "amc12a_2013_p4",
+      "success": true,
+      "attempts": 1,
+      "latency_ms": 401928.23696136475
+    },
+    {
+      "name": "mathd_algebra_392",
+      "success": true,
+      "attempts": 3,
+      "latency_ms": 414941.3449764252
+    },
+    {
+      "name": "mathd_numbertheory_314",
+      "success": true,
+      "attempts": 1,
+      "latency_ms": 429080.4810523987
+    },
+    {
+      "name": "induction_prod1p1onk3le3m1onn",
+      "success": true,
+      "attempts": 3,
+      "latency_ms": 454783.1778526306
+    },
+    {
+      "name": "mathd_numbertheory_343",
+      "success": true,
+      "attempts": 1,
+      "latency_ms": 413505.3551197052
+    },
+    {
+      "name": "mathd_algebra_756",
+      "success": true,
+      "attempts": 1,
+      "latency_ms": 409233.9017391205
+    },
+    {
+      "name": "amc12b_2002_p7",
+      "success": true,
+      "attempts": 1,
+      "latency_ms": 379825.1419067383
+    },
+    {
+      "name": "mathd_algebra_80",
+      "success": true,
+      "attempts": 1,
+      "latency_ms": 378305.3071498871
+    },
+    {
+      "name": "mathd_numbertheory_457",
+      "success": false,
+      "attempts": 16,
+      "latency_ms": 515839.3199443817
+    },
+    {
+      "name": "amc12_2000_p12",
+      "success": true,
+      "attempts": 1,
+      "latency_ms": 360545.3450679779
+    },
+    {
+      "name": "mathd_numbertheory_135",
+      "success": true,
+      "attempts": 1,
+      "latency_ms": 380766.9486999512
+    },
+    {
+      "name": "mathd_algebra_275",
+      "success": true,
+      "attempts": 10,
+      "latency_ms": 426333.8861465454
+    },
+    {
+      "name": "mathd_algebra_388",
+      "success": true,
+      "attempts": 1,
+      "latency_ms": 396404.24823760986
+    },
+    {
+      "name": "amc12a_2020_p7",
+      "success": true,
+      "attempts": 1,
+      "latency_ms": 398082.2720527649
+    },
+    {
+      "name": "imo_1981_p6",
+      "success": false,
+      "attempts": 16,
+      "latency_ms": 477488.4181022644
+    },
+    {
+      "name": "mathd_algebra_263",
+      "success": true,
+      "attempts": 1,
+      "latency_ms": 370269.57726478577
+    },
+    {
+      "name": "mathd_numbertheory_34",
+      "success": true,
+      "attempts": 1,
+      "latency_ms": 390761.0580921173
+    },
+    {
+      "name": "mathd_numbertheory_764",
+      "success": false,
+      "attempts": 16,
+      "latency_ms": 485588.7899398804
+    },
+    {
+      "name": "amc12b_2021_p4",
+      "success": true,
+      "attempts": 2,
+      "latency_ms": 397806.8609237671
+    },
+    {
+      "name": "imo_1962_p2",
+      "success": true,
+      "attempts": 4,
+      "latency_ms": 431352.63299942017
+    },
+    {
+      "name": "mathd_algebra_170",
+      "success": true,
+      "attempts": 1,
+      "latency_ms": 398067.999124527
+    },
+    {
+      "name": "mathd_algebra_432",
+      "success": true,
+      "attempts": 1,
+      "latency_ms": 373565.06299972534
+    },
+    {
+      "name": "mathd_algebra_598",
+      "success": true,
+      "attempts": 1,
+      "latency_ms": 375912.8997325897
+    },
+    {
+      "name": "algebra_bleqa_apbon2msqrtableqambsqon8b",
+      "success": true,
+      "attempts": 3,
+      "latency_ms": 410284.0938568115
+    },
+    {
+      "name": "mathd_algebra_276",
+      "success": true,
+      "attempts": 8,
+      "latency_ms": 447625.57101249695
+    },
+    {
+      "name": "amc12a_2021_p14",
+      "success": true,
+      "attempts": 1,
+      "latency_ms": 376840.106010437
+    },
+    {
+      "name": "algebra_sum1onsqrt2to1onsqrt10000lt198",
+      "success": true,
+      "attempts": 5,
+      "latency_ms": 443505.5570602417
+    },
+    {
+      "name": "mathd_numbertheory_618",
+      "success": true,
+      "attempts": 1,
+      "latency_ms": 392955.6198120117
+    },
+    {
+      "name": "amc12a_2020_p4",
+      "success": false,
+      "attempts": 16,
+      "latency_ms": 515830.4147720337
+    },
+    {
+      "name": "amc12b_2020_p6",
+      "success": false,
+      "attempts": 16,
+      "latency_ms": 565706.0039043427
+    },
+    {
+      "name": "mathd_numbertheory_435",
+      "success": true,
+      "attempts": 1,
+      "latency_ms": 405906.67510032654
+    },
+    {
+      "name": "algebra_others_exirrpowirrrat",
+      "success": true,
+      "attempts": 4,
+      "latency_ms": 497146.74830436707
+    },
+    {
+      "name": "mathd_algebra_427",
+      "success": true,
+      "attempts": 1,
+      "latency_ms": 426709.50198173523
+    },
+    {
+      "name": "mathd_algebra_76",
+      "success": true,
+      "attempts": 1,
+      "latency_ms": 429767.1296596527
+    },
+    {
+      "name": "mathd_numbertheory_99",
+      "success": true,
+      "attempts": 1,
+      "latency_ms": 435169.0790653229
+    },
+    {
+      "name": "algebra_9onxpypzleqsum2onxpy",
+      "success": true,
+      "attempts": 1,
+      "latency_ms": 429922.5790500641
+    },
+    {
+      "name": "mathd_numbertheory_233",
+      "success": false,
+      "attempts": 16,
+      "latency_ms": 540063.2367134094
+    },
+    {
+      "name": "algebra_absapbon1pabsapbleqsumabsaon1pabsa",
+      "success": true,
+      "attempts": 1,
+      "latency_ms": 469502.55584716797
+    },
+    {
+      "name": "imo_1984_p6",
+      "success": false,
+      "attempts": 16,
+      "latency_ms": 554860.1739406586
+    },
+    {
+      "name": "imo_2001_p6",
+      "success": false,
+      "attempts": 16,
+      "latency_ms": 560290.9698486328
+    },
+    {
+      "name": "mathd_numbertheory_321",
+      "success": false,
+      "attempts": 16,
+      "latency_ms": 558593.1270122528
+    },
+    {
+      "name": "mathd_algebra_17",
+      "success": false,
+      "attempts": 16,
+      "latency_ms": 572629.6870708466
+    },
+    {
+      "name": "mathd_algebra_153",
+      "success": true,
+      "attempts": 1,
+      "latency_ms": 474540.9982204437
+    },
+    {
+      "name": "algebra_sqineq_unitcircatbpamblt1",
+      "success": true,
+      "attempts": 1,
+      "latency_ms": 505534.3098640442
+    },
+    {
+      "name": "amc12a_2021_p18",
+      "success": true,
+      "attempts": 1,
+      "latency_ms": 476674.6151447296
+    },
+    {
+      "name": "mathd_algebra_329",
+      "success": true,
+      "attempts": 1,
+      "latency_ms": 444475.0089645386
+    },
+    {
+      "name": "induction_pprime_pdvdapowpma",
+      "success": true,
+      "attempts": 5,
+      "latency_ms": 499880.4340362549
+    },
+    {
+      "name": "amc12a_2021_p9",
+      "success": true,
+      "attempts": 1,
+      "latency_ms": 483929.3291568756
+    },
+    {
+      "name": "aime_1984_p1",
+      "success": true,
+      "attempts": 1,
+      "latency_ms": 474678.0412197113
+    },
+    {
+      "name": "amc12a_2021_p22",
+      "success": false,
+      "attempts": 16,
+      "latency_ms": 618368.9570426941
+    },
+    {
+      "name": "mathd_numbertheory_229",
+      "success": true,
+      "attempts": 1,
+      "latency_ms": 469755.215883255
+    },
+    {
+      "name": "mathd_numbertheory_100",
+      "success": true,
+      "attempts": 1,
+      "latency_ms": 492009.4881057739
+    },
+    {
+      "name": "mathd_algebra_313",
+      "success": true,
+      "attempts": 3,
+      "latency_ms": 528649.6067047119
+    },
+    {
+      "name": "amc12b_2002_p4",
+      "success": true,
+      "attempts": 1,
+      "latency_ms": 511301.10788345337
+    },
+    {
+      "name": "amc12a_2002_p6",
+      "success": true,
+      "attempts": 1,
+      "latency_ms": 492746.8421459198
+    },
+    {
+      "name": "amc12a_2003_p23",
+      "success": false,
+      "attempts": 16,
+      "latency_ms": 606023.0951309204
+    },
+    {
+      "name": "mathd_algebra_129",
+      "success": true,
+      "attempts": 1,
+      "latency_ms": 552588.1857872009
+    },
+    {
+      "name": "amc12b_2021_p18",
+      "success": false,
+      "attempts": 16,
+      "latency_ms": 637673.2218265533
+    },
+    {
+      "name": "mathd_algebra_484",
+      "success": true,
+      "attempts": 1,
+      "latency_ms": 479339.64800834656
+    },
+    {
+      "name": "mathd_numbertheory_551",
+      "success": true,
+      "attempts": 1,
+      "latency_ms": 458106.4109802246
+    },
+    {
+      "name": "mathd_algebra_304",
+      "success": true,
+      "attempts": 1,
+      "latency_ms": 454608.61897468567
+    },
+    {
+      "name": "amc12a_2021_p8",
+      "success": false,
+      "attempts": 16,
+      "latency_ms": 578030.3328037262
+    },
+    {
+      "name": "algebra_ineq_nto1onlt2m1on",
+      "success": false,
+      "attempts": 16,
+      "latency_ms": 587512.6540660858
+    },
+    {
+      "name": "amc12b_2002_p19",
+      "success": true,
+      "attempts": 1,
+      "latency_ms": 544083.123922348
+    },
+    {
+      "name": "mathd_numbertheory_341",
+      "success": true,
+      "attempts": 2,
+      "latency_ms": 515238.2662296295
+    },
+    {
+      "name": "mathd_numbertheory_711",
+      "success": true,
+      "attempts": 9,
+      "latency_ms": 566210.990190506
+    },
+    {
+      "name": "amc12b_2020_p22",
+      "success": true,
+      "attempts": 5,
+      "latency_ms": 594280.8289527893
+    },
+    {
+      "name": "mathd_algebra_113",
+      "success": true,
+      "attempts": 1,
+      "latency_ms": 475841.9089317322
+    },
+    {
+      "name": "amc12a_2020_p9",
+      "success": false,
+      "attempts": 16,
+      "latency_ms": 628529.3498039246
+    },
+    {
+      "name": "amc12_2000_p1",
+      "success": true,
+      "attempts": 2,
+      "latency_ms": 529199.853181839
+    },
+    {
+      "name": "amc12a_2021_p19",
+      "success": false,
+      "attempts": 16,
+      "latency_ms": 635221.2810516357
+    },
+    {
+      "name": "algebra_amgm_sumasqdivbgeqsuma",
+      "success": true,
+      "attempts": 1,
+      "latency_ms": 507803.06696891785
+    },
+    {
+      "name": "mathd_numbertheory_212",
+      "success": true,
+      "attempts": 1,
+      "latency_ms": 498213.4919166565
+    },
+    {
+      "name": "mathd_numbertheory_320",
+      "success": true,
+      "attempts": 2,
+      "latency_ms": 528055.0117492676
+    },
+    {
+      "name": "mathd_algebra_125",
+      "success": true,
+      "attempts": 2,
+      "latency_ms": 506891.7987346649
+    },
+    {
+      "name": "induction_1pxpownlt1pnx",
+      "success": true,
+      "attempts": 1,
+      "latency_ms": 511359.0700626373
+    },
+    {
+      "name": "mathd_algebra_148",
+      "success": true,
+      "attempts": 1,
+      "latency_ms": 527295.3019142151
+    },
+    {
+      "name": "amc12a_2019_p12",
+      "success": true,
+      "attempts": 1,
+      "latency_ms": 565802.5698661804
+    },
+    {
+      "name": "induction_11div10tonmn1ton",
+      "success": true,
+      "attempts": 1,
+      "latency_ms": 575675.1730442047
+    },
+    {
+      "name": "algebra_amgm_sum1toneqn_prod1tonleq1",
+      "success": true,
+      "attempts": 1,
+      "latency_ms": 487546.8842983246
+    },
+    {
+      "name": "imo_1985_p6",
+      "success": false,
+      "attempts": 16,
+      "latency_ms": 630048.3450889587
+    },
+    {
+      "name": "amc12a_2020_p15",
+      "success": false,
+      "attempts": 16,
+      "latency_ms": 596913.7058258057
+    },
+    {
+      "name": "mathd_algebra_332",
+      "success": true,
+      "attempts": 1,
+      "latency_ms": 559489.265203476
+    },
+    {
+      "name": "algebra_cubrtrp1oncubrtreq3_rcubp1onrcubeq5778",
+      "success": false,
+      "attempts": 16,
+      "latency_ms": 715448.8210678101
+    },
+    {
+      "name": "mathd_algebra_293",
+      "success": true,
+      "attempts": 1,
+      "latency_ms": 541431.7848682404
+    },
+    {
+      "name": "mathd_algebra_440",
+      "success": true,
+      "attempts": 1,
+      "latency_ms": 524550.2409934998
+    },
+    {
+      "name": "mathd_numbertheory_254",
+      "success": true,
+      "attempts": 1,
+      "latency_ms": 508708.4836959839
+    },
+    {
+      "name": "amc12_2000_p6",
+      "success": true,
+      "attempts": 1,
+      "latency_ms": 537594.8510169983
+    },
+    {
+      "name": "aime_1988_p8",
+      "success": true,
+      "attempts": 10,
+      "latency_ms": 642825.7839679718
+    },
+    {
+      "name": "mathd_algebra_114",
+      "success": true,
+      "attempts": 1,
+      "latency_ms": 504853.76715660095
+    },
+    {
+      "name": "imo_2019_p1",
+      "success": false,
+      "attempts": 16,
+      "latency_ms": 629065.5691623688
+    },
+    {
+      "name": "mathd_algebra_513",
+      "success": true,
+      "attempts": 1,
+      "latency_ms": 519654.8783779144
+    },
+    {
+      "name": "mathd_algebra_143",
+      "success": true,
+      "attempts": 1,
+      "latency_ms": 525425.2490997314
+    },
+    {
+      "name": "mathd_algebra_354",
+      "success": true,
+      "attempts": 1,
+      "latency_ms": 534363.3391857147
+    },
+    {
+      "name": "aime_1984_p7",
+      "success": false,
+      "attempts": 16,
+      "latency_ms": 649908.9632034302
+    },
+    {
+      "name": "mathd_algebra_246",
+      "success": true,
+      "attempts": 1,
+      "latency_ms": 532327.2411823273
+    },
+    {
+      "name": "aime_1983_p3",
+      "success": false,
+      "attempts": 16,
+      "latency_ms": 658030.4887294769
+    },
+    {
+      "name": "numbertheory_3pow2pownm1mod2pownp3eq2pownp2",
+      "success": false,
+      "attempts": 16,
+      "latency_ms": 661927.1559715271
+    },
+    {
+      "name": "mathd_numbertheory_85",
+      "success": true,
+      "attempts": 1,
+      "latency_ms": 516076.1430263519
+    },
+    {
+      "name": "amc12_2001_p21",
+      "success": false,
+      "attempts": 16,
+      "latency_ms": 654235.1548671722
+    },
+    {
+      "name": "mathd_numbertheory_239",
+      "success": true,
+      "attempts": 1,
+      "latency_ms": 549893.8679695129
+    },
+    {
+      "name": "amc12b_2002_p2",
+      "success": true,
+      "attempts": 1,
+      "latency_ms": 549707.1859836578
+    },
+    {
+      "name": "mathd_algebra_196",
+      "success": true,
+      "attempts": 1,
+      "latency_ms": 565502.7339458466
+    },
+    {
+      "name": "mathd_algebra_342",
+      "success": true,
+      "attempts": 1,
+      "latency_ms": 570904.4709205627
+    },
+    {
+      "name": "mathd_numbertheory_517",
+      "success": true,
+      "attempts": 1,
+      "latency_ms": 562920.440196991
+    },
+    {
+      "name": "amc12a_2009_p7",
+      "success": true,
+      "attempts": 1,
+      "latency_ms": 541643.9366340637
+    },
+    {
+      "name": "mathd_algebra_270",
+      "success": true,
+      "attempts": 1,
+      "latency_ms": 501236.8919849396
+    },
+    {
+      "name": "amc12a_2021_p12",
+      "success": false,
+      "attempts": 16,
+      "latency_ms": 616804.365158081
+    },
+    {
+      "name": "mathd_algebra_362",
+      "success": true,
+      "attempts": 2,
+      "latency_ms": 534843.1921005249
+    },
+    {
+      "name": "mathd_numbertheory_521",
+      "success": true,
+      "attempts": 1,
+      "latency_ms": 525030.3010940552
+    },
+    {
+      "name": "amc12a_2002_p13",
+      "success": true,
+      "attempts": 6,
+      "latency_ms": 595810.1890087128
+    },
+    {
+      "name": "imo_1964_p2",
+      "success": true,
+      "attempts": 1,
+      "latency_ms": 594688.0469322205
+    },
+    {
+      "name": "mathd_algebra_289",
+      "success": false,
+      "attempts": 16,
+      "latency_ms": 629779.942035675
+    },
+    {
+      "name": "amc12a_2021_p3",
+      "success": true,
+      "attempts": 1,
+      "latency_ms": 596278.4290313721
+    },
+    {
+      "name": "amc12a_2008_p25",
+      "success": false,
+      "attempts": 16,
+      "latency_ms": 624110.6688976288
+    },
+    {
+      "name": "algebra_apbpceq2_abpbcpcaeq1_aleq1on3anbleq1ancleq4on3",
+      "success": true,
+      "attempts": 8,
+      "latency_ms": 632762.0811462402
+    },
+    {
+      "name": "mathd_numbertheory_66",
+      "success": true,
+      "attempts": 1,
+      "latency_ms": 576389.0681266785
+    },
+    {
+      "name": "amc12b_2021_p1",
+      "success": true,
+      "attempts": 1,
+      "latency_ms": 608634.871006012
+    },
+    {
+      "name": "algebra_apbon2pownleqapownpbpowon2",
+      "success": true,
+      "attempts": 3,
+      "latency_ms": 626346.832036972
+    },
+    {
+      "name": "imo_1968_p5_1",
+      "success": false,
+      "attempts": 16,
+      "latency_ms": 692678.5659790039
+    },
+    {
+      "name": "aime_1990_p15",
+      "success": true,
+      "attempts": 16,
+      "latency_ms": 708127.5970935822
+    },
+    {
+      "name": "mathd_numbertheory_235",
+      "success": true,
+      "attempts": 1,
+      "latency_ms": 570707.7193260193
+    },
+    {
+      "name": "amc12b_2020_p13",
+      "success": true,
+      "attempts": 2,
+      "latency_ms": 598971.5373516083
+    },
+    {
+      "name": "amc12b_2021_p13",
+      "success": false,
+      "attempts": 16,
+      "latency_ms": 702972.7568626404
+    },
+    {
+      "name": "mathd_numbertheory_234",
+      "success": true,
+      "attempts": 1,
+      "latency_ms": 672368.0200576782
+    },
+    {
+      "name": "numbertheory_aoddbdiv4asqpbsqmod8eq1",
+      "success": true,
+      "attempts": 1,
+      "latency_ms": 651764.4040584564
+    },
+    {
+      "name": "mathd_numbertheory_222",
+      "success": true,
+      "attempts": 1,
+      "latency_ms": 643465.3120040894
+    },
+    {
+      "name": "aime_1999_p11",
+      "success": false,
+      "attempts": 16,
+      "latency_ms": 739694.5102214813
+    },
+    {
+      "name": "mathd_algebra_359",
+      "success": true,
+      "attempts": 1,
+      "latency_ms": 580400.6872177124
+    },
+    {
+      "name": "imo_1965_p2",
+      "success": false,
+      "attempts": 16,
+      "latency_ms": 700891.7367458344
+    },
+    {
+      "name": "mathd_algebra_288",
+      "success": true,
+      "attempts": 4,
+      "latency_ms": 591822.3781585693
+    },
+    {
+      "name": "mathd_numbertheory_127",
+      "success": true,
+      "attempts": 1,
+      "latency_ms": 560963.5109901428
+    },
+    {
+      "name": "imo_1974_p3",
+      "success": false,
+      "attempts": 16,
+      "latency_ms": 697541.9669151306
+    },
+    {
+      "name": "aime_1991_p9",
+      "success": false,
+      "attempts": 16,
+      "latency_ms": 700780.3597450256
+    },
+    {
+      "name": "amc12a_2009_p6",
+      "success": false,
+      "attempts": 16,
+      "latency_ms": 695065.4230117798
+    },
+    {
+      "name": "mathd_algebra_158",
+      "success": true,
+      "attempts": 2,
+      "latency_ms": 590691.7140483856
+    },
+    {
+      "name": "algebra_absxm1pabsxpabsxp1eqxp2_0leqxleq1",
+      "success": true,
+      "attempts": 2,
+      "latency_ms": 583427.0663261414
+    },
+    {
+      "name": "aime_1990_p4",
+      "success": true,
+      "attempts": 4,
+      "latency_ms": 616938.1959438324
+    },
+    {
+      "name": "mathd_numbertheory_541",
+      "success": true,
+      "attempts": 1,
+      "latency_ms": 649554.6939373016
+    },
+    {
+      "name": "mathd_algebra_314",
+      "success": true,
+      "attempts": 1,
+      "latency_ms": 566439.462184906
+    },
+    {
+      "name": "amc12_2000_p20",
+      "success": true,
+      "attempts": 1,
+      "latency_ms": 603644.5059776306
+    },
+    {
+      "name": "mathd_algebra_302",
+      "success": true,
+      "attempts": 1,
+      "latency_ms": 528052.7858734131
+    },
+    {
+      "name": "aime_1983_p2",
+      "success": true,
+      "attempts": 1,
+      "latency_ms": 583957.5748443604
+    },
+    {
+      "name": "mathd_algebra_139",
+      "success": true,
+      "attempts": 1,
+      "latency_ms": 539965.1029109955
+    },
+    {
+      "name": "amc12a_2021_p25",
+      "success": false,
+      "attempts": 16,
+      "latency_ms": 687308.737039566
+    },
+    {
+      "name": "amc12a_2020_p25",
+      "success": false,
+      "attempts": 16,
+      "latency_ms": 692084.6750736237
+    },
+    {
+      "name": "mathd_numbertheory_150",
+      "success": true,
+      "attempts": 1,
+      "latency_ms": 577661.3371372223
+    },
+    {
+      "name": "aime_1989_p8",
+      "success": true,
+      "attempts": 2,
+      "latency_ms": 654207.487821579
+    },
+    {
+      "name": "mathd_numbertheory_296",
+      "success": true,
+      "attempts": 1,
+      "latency_ms": 647347.1102714539
+    },
+    {
+      "name": "mathd_algebra_142",
+      "success": true,
+      "attempts": 1,
+      "latency_ms": 626004.478931427
+    },
+    {
+      "name": "numbertheory_exk2powkeqapb2mulbpa2_aeq1",
+      "success": false,
+      "attempts": 16,
+      "latency_ms": 718565.4599666595
+    },
+    {
+      "name": "mathd_algebra_400",
+      "success": true,
+      "attempts": 1,
+      "latency_ms": 612734.1449260712
+    },
+    {
+      "name": "aime_1995_p7",
+      "success": false,
+      "attempts": 16,
+      "latency_ms": 748880.056142807
+    },
+    {
+      "name": "mathd_numbertheory_185",
+      "success": true,
+      "attempts": 1,
+      "latency_ms": 610508.6340904236
+    },
+    {
+      "name": "mathd_algebra_441",
+      "success": true,
+      "attempts": 1,
+      "latency_ms": 613568.7499046326
+    },
+    {
+      "name": "mathd_numbertheory_582",
+      "success": true,
+      "attempts": 1,
+      "latency_ms": 598965.5199050903
+    },
+    {
+      "name": "mathd_algebra_338",
+      "success": true,
+      "attempts": 1,
+      "latency_ms": 598695.307970047
+    }
+  ]
+}

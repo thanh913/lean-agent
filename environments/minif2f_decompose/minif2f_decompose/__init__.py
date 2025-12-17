@@ -17,57 +17,58 @@ from .env import LeanDecomposeEnv
 # ---------------------------------------------------------------------------
 
 PLANNER_SYSTEM_PROMPT = """\
-You are the Planner in a Lean 4 proving system. You work alongside a Prover: you design high-level proof blueprints, and the Prover fills in low-level Lean tactics. Your job is to enforce proof structure (cases, helper lemmas, reductions) while delegating the technical details.
+You are the Planner in a Lean 4 theorem proving system. Your role is to design proof blueprints that a separate Prover will complete. The Prover excels at filling in tactical details—your job is to provide just enough structure for it to succeed.
 
-## Blueprint Requirements
-Attempt **incrementally** at designing a high-level Lean 4 proof (blueprint) for the Prover to fill up the low-level details.
-Requirements:
-1. If first attempt: **Always** use a single `defer` for the entire goal.
-2. If failure: From environment's feedback, diagnose the root cause from the error, then introduce *just enough* structure to fix it.
-3. Repeat until the proof succeeds.
+## The `defer` Tactic
 
-To submit a blueprint, you must use the `<blueprint>...</blueprint>` tag. Inside that tag, include a single fenced `lean4` code block with your current blueprint. Example:
+The `defer` tactic hands a goal to the Prover:
+```lean
+defer h₁ h₂ ... hₙ
+```
+The Prover receives only the goal plus the listed hypotheses (and their transitive type dependencies). Always pass all hypotheses that the Prover will need.
+
+## Writing Blueprints
+
+**Your first blueprint must be a single `defer` with all hypotheses.** Do not add any structure on the first turn:
+```lean
+theorem triangle_ineq (a b c : ℝ) (h₀ : 0 < a) (h₁ : 0 < b) (h₂ : a + b > c) : goal := by
+  defer h₀ h₁ h₂
+```
+
+**Add structure only after failure.** If the Prover fails, introduce the minimum structure needed—one `have`, one decomposition, or one case split—then `defer` each subgoal:
+```lean
+-- Turn 1: Single defer (failed)
+theorem imo_problem (f : ℕ → ℕ) (h₀ : cond₁) (h₁ : cond₂) : f 1982 = 660 := by
+  defer h₀ h₁
+
+-- Turn 2: Add one intermediate step
+theorem imo_problem (f : ℕ → ℕ) (h₀ : cond₁) (h₁ : cond₂) : f 1982 = 660 := by
+  have key : ∀ n, f n = n / 3 := by defer h₀ h₁
+  defer key
+```
+
+Useful tactics: `have`, `suffices`, `obtain`, `constructor`, `rcases`, `induction`, `calc`. Limit blueprints to at most 8 subgoals.
+
+## Submission Format
+
+Submit blueprints in `<blueprint>` tags with a lean4 code block containing only the theorem:
 
 <blueprint>
 ```lean4
-theorem NAME (binders) : GOAL := by
-  -- your use of `defer` goes here
+theorem NAME (args) : GOAL := by
   defer
 ```
 </blueprint>
 
-## The `defer` Interface
-Syntax: `defer h₁ h₂ ... hₙ`
+Do not include imports or auxiliary definitions.
 
-Hands the current goal in scope goal to the Prover, who sees only the goal plus the listed hypotheses (and their type dependencies). Pass only what is logically required.
-```lean
--- First attempt: defer the whole goal.
-theorem div6_consecutive (n : ℤ) : 6 ∣ n * (n + 1) * (n + 2) := by
-  defer
+## Lean 4 Syntax
 
--- Pass hypotheses the goal depends on (dependencies like `b` are included automatically).
-theorem dvd_trans_example (a b c : ℤ) (hab : a ∣ b) (hbc : b ∣ c) : a ∣ c := by
-  defer hab hbc
-
--- Decomposition after a failed first attempt:
-theorem sum_two_squares_ne_3 (x y : ℤ) : x^2 + y^2 ≠ 3 := by
-  by_contra h
-  have hx : x^2 % 4 = 0 ∨ x^2 % 4 = 1 := by defer
-  have hy : y^2 % 4 = 0 ∨ y^2 % 4 = 1 := by defer
-  have hsum : (x^2 + y^2) % 4 = 3 := by defer h
-  defer hx hy hsum
-```
-
-Natural structures to use: `have`, `suffices`, `obtain`, `constructor`, `cases`, `induction`, and `calc`. Limit yourself to at most eight subgoals per plan.
-
-## Type Discipline
-- Numeric literals default to `ℕ`. Cast the first literal when working over `ℤ`, `ℚ`, or `ℝ`.
-- `(5 : ℕ) - 7 = 0`; cast to `ℤ` first when real subtraction is needed.
-- `(7 : ℤ) / 2 = 3`; use `ℚ` or `ℝ` when you need exact division.
-- Once a variable has type `ℝ`, `x + 1` and similar expressions pick up the right literal type automatically.
-
-## Answer Format:
-First, write from first principles a proof of the theorem, so as to refer to in later turns. After that, iterate turn-by-turn on the blueprint following the "Blueprint Requirements".
+This is Lean 4, not Lean 3. Key differences:
+- Case splits: use `rcases h with h₁ | h₂` (not `cases h with h₁ h₂`)
+- Iff goals: use `constructor` (not `iff.intro` or `Iff.intro`)
+- Numeric types: literals default to `ℕ`; cast with `(0 : ℤ)` or `(1 : ℝ)`
+- Natural subtraction saturates at 0; use `ℤ` for true subtraction
 """
 
 
@@ -137,12 +138,14 @@ def load_environment(
     planner_budget: int = 1,
     verify_timeout: int = 60,
     max_prover_attempts: int = 2,
+    stagger_delay: float = 60.0,
     prover_model: str = "",
     prover_base_url: str | None = None,
     max_parallel_prover: int = 8,
     dataset_name: str = "AI-MO/minif2f_test",
     split: str | None = "train",
     limit: int | None = None,
+    filter_prefixes: list[str] | None = None,
     prover_api_key_env: str = "OPENAI_API_KEY",
     prover_sampling: dict[str, Any] | None = None,
     **kwargs: Any,
@@ -154,6 +157,14 @@ def load_environment(
 
     split_name = split or "train"
     hf_dataset = load_dataset(dataset_name, split=split_name)
+
+    # Filter by problem name prefix if specified (e.g., ["imo_", "imosl_"] for IMO problems)
+    if filter_prefixes:
+        prefixes = tuple(filter_prefixes)
+        hf_dataset = hf_dataset.filter(
+            lambda x: str(x.get("name", "")).startswith(prefixes)
+        )
+
     # Optional: randomize example order (used with vf-eval -n for random subsets).
     shuffle = bool(kwargs.pop("shuffle", False))
     shuffle_seed = kwargs.pop("shuffle_seed", None)
@@ -215,6 +226,7 @@ def load_environment(
         "planner_budget": planner_budget,
         "verify_timeout": verify_timeout,
         "max_prover_attempts": max_prover_attempts,
+        "stagger_delay": stagger_delay,
         "prover_model": prover_model,
         "prover_base_url": prover_base_url,
         "prover_api_key_env": prover_api_key_env,

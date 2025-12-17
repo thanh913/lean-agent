@@ -10,7 +10,6 @@ resolution-markers = [
 members = [
     "lean-agent",
     "minif2f-decompose",
-    "minif2f-prover-bench",
 ]
 
 [[package]]
@@ -978,21 +977,6 @@ requires-dist = [
     { name = "seaborn", specifier = ">=0.13" },
     { name = "tree-sitter", specifier = ">=0.21.3" },
     { name = "tree-sitter-languages", specifier = ">=1.10.2" },
-    { name = "verifiers", specifier = "==0.1.8.post1" },
-]
-
-[[package]]
-name = "minif2f-prover-bench"
-version = "0.0.0"
-source = { editable = "environments/minif2f_prover_bench" }
-dependencies = [
-    { name = "minif2f-decompose" },
-    { name = "verifiers" },
-]
-
-[package.metadata]
-requires-dist = [
-    { name = "minif2f-decompose", editable = "environments/minif2f_decompose" },
     { name = "verifiers", specifier = "==0.1.8.post1" },
 ]
 

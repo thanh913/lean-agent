@@ -278,6 +278,7 @@ class ExecutorConfig:
     verify_timeout: int
     max_prover_attempts: int
     session_id: str
+    stagger_delay: float = 60.0  # seconds between starting attempts
 
 
 # ---------------------------------------------------------------------------
@@ -358,9 +359,23 @@ def get_verify_prefix(header_lines: list[str]) -> list[str]:
 # ---------------------------------------------------------------------------
 
 
-def extract_tasks(messages: list[dict[str, Any]]) -> list[DeferTask]:
-    """Extract deferred tasks from compiler messages."""
+def extract_tasks(
+    messages: list[dict[str, Any]],
+    code: str | None = None,
+) -> list[DeferTask]:
+    """Extract deferred tasks from compiler messages.
+
+    Args:
+        messages: Compiler messages containing [DEFER] info
+        code: Original source code (used to compute offset correction
+              when Lean's byte positions don't match our source)
+    """
     tasks: list[DeferTask] = []
+    code_bytes = code.encode("utf-8") if code else None
+
+    # First pass: collect all tasks with raw byte positions
+    raw_tasks: list[tuple[dict, dict, int, int, int, list[str]]] = []
+
     for message in messages or []:
         severity = str(message.get("severity", "")).lower()
         if severity not in {"info", "information"}:
@@ -378,21 +393,52 @@ def extract_tasks(messages: list[dict[str, Any]]) -> list[DeferTask]:
             context_lines = [str(line) for line in context]
         else:
             context_lines = str(context).splitlines()
+
         try:
             start = int(payload.get("start_byte"))
             end = int(payload.get("end_byte"))
         except (TypeError, ValueError):
             continue
+
         indent = int(payload.get("indent", 0) or 0)
+        goal = str(payload.get("goal", ""))
+        raw_tasks.append((payload, message, start, end, indent, context_lines))
+
+    if not raw_tasks:
+        return tasks
+
+    # Compute offset correction if code is available
+    offset = 0
+    if code_bytes and raw_tasks:
+        # Find where "defer" actually appears and compare to reported position
+        # Use first task to compute offset (assumes consistent offset)
+        first_start = raw_tasks[0][2]
+        first_end = raw_tasks[0][3]
+        reported_len = first_end - first_start
+
+        # Search for "defer" near the reported position
+        search_start = max(0, first_start - 200)
+        search_end = min(len(code_bytes), first_start + 200)
+        search_region = code_bytes[search_start:search_end]
+
+        # Find "defer" in search region
+        defer_pos = search_region.find(b"defer")
+        if defer_pos >= 0:
+            actual_start = search_start + defer_pos
+            offset = actual_start - first_start
+
+    # Apply offset to all tasks
+    for payload, message, start, end, indent, context_lines in raw_tasks:
         tasks.append(
             DeferTask(
                 goal=str(payload.get("goal", "")),
                 context_lines=context_lines,
-                start_byte=start,
-                end_byte=end,
+                start_byte=start + offset,
+                end_byte=end + offset,
                 indent=indent,
             )
         )
+
     return tasks
 
 
@@ -520,6 +566,114 @@ def render_subgoal(spec: TaskSpec) -> str:
 
 
 # ---------------------------------------------------------------------------
+# Proof Splicing
+# ---------------------------------------------------------------------------
+
+
+def extract_clean_proof(spliced_code: str, header_lines: list[str]) -> str:
+    """Extract clean proof from spliced code (without DEFER_PRELUDE).
+
+    Args:
+        spliced_code: Code with proofs spliced in (includes DEFER_PRELUDE)
+        header_lines: Original header lines
+
+    Returns:
+        Clean code with just imports and theorem (no Defer namespace)
+    """
+    lines = spliced_code.splitlines()
+
+    # The DEFER_PRELUDE ends with the elab block containing "goal.assign"
+    # Find that line and look for the first theorem/lemma after it
+    elab_end_idx = None
+    for i, line in enumerate(lines):
+        if "goal.assign" in line:
+            elab_end_idx = i
+            break
+
+    # Start searching for theorem after the elab block ends
+    search_start = elab_end_idx + 1 if elab_end_idx is not None else 0
+
+    # Find where the theorem starts (first line starting with theorem, lemma, etc.)
+    # These are the standard Lean declaration keywords
+    decl_keywords = ("theorem ", "lemma ", "example ", "corollary ", "proposition ")
+    theorem_start_idx = None
+    for i in range(search_start, len(lines)):
+        stripped = lines[i].lstrip()
+        if any(stripped.startswith(kw) for kw in decl_keywords):
+            theorem_start_idx = i
+            break
+
+    if theorem_start_idx is None:
+        # No theorem found, return as-is
+        return spliced_code
+
+    # Get the theorem and everything after it
+    theorem_lines = lines[theorem_start_idx:]
+
+    # Build clean prefix (imports without DEFER_PRELUDE)
+    verify_prefix = get_verify_prefix(header_lines)
+
+    # Combine
+    result_lines = verify_prefix + theorem_lines
+    return "\n".join(result_lines) + "\n" if result_lines else ""
+
+
+def splice_proofs(
+    code: str,
+    tasks: list[DeferTask],
+    outcomes: list[TaskOutcome],
+) -> str:
+    """Splice proven bodies back into code, replacing defer calls.
+
+    Args:
+        code: Original code containing defer calls
+        tasks: List of DeferTask with byte positions (UTF-8)
+        outcomes: List of TaskOutcome with proof bodies (must match tasks by idx)
+
+    Returns:
+        Code with defer calls replaced by proof bodies
+    """
+    if not tasks or not outcomes:
+        return code
+
+    # Build outcome map by idx
+    outcome_map = {o.idx: o for o in outcomes if o.success and o.body}
+
+    # Sort tasks by start_byte descending (splice from end to preserve positions)
+    indexed_tasks = [(i, t) for i, t in enumerate(tasks)]
+    indexed_tasks.sort(key=lambda x: x[1].start_byte, reverse=True)
+
+    # Work with bytes since Lean reports UTF-8 byte positions
+    result_bytes = code.encode("utf-8")
+
+    for idx, task in indexed_tasks:
+        outcome = outcome_map.get(idx)
+        if not outcome or not outcome.body:
+            continue
+
+        # Format body with proper indentation
+        body_lines = outcome.body.strip().splitlines()
+        if len(body_lines) == 1:
+            # Single line: just replace inline
+            indented_body = body_lines[0]
+        else:
+            # Multi-line: indent continuation lines
+            indent = " " * task.indent
+            indented_body = body_lines[0]
+            for line in body_lines[1:]:
+                if line.strip():
+                    indented_body += "\n" + indent + line
+                else:
+                    indented_body += "\n"
+
+        # Replace the defer call with the proof body (using byte positions)
+        body_bytes = indented_body.encode("utf-8")
+        result_bytes = result_bytes[:task.start_byte] + body_bytes + result_bytes[task.end_byte:]
+
+    return result_bytes.decode("utf-8")
+
+
+# ---------------------------------------------------------------------------
 # Prover Prompt
 # ---------------------------------------------------------------------------
 
@@ -587,8 +741,8 @@ class ProofExecutor:
                 attempts=0,
             )
 
-        # 2. Extract tasks
-        tasks = extract_tasks(compile_result.messages)
+        # 2. Extract tasks (pass code for reliable byte position computation)
+        tasks = extract_tasks(compile_result.messages, code_with_prelude)
         if not tasks:
             return await self._final_verify_only(code_with_prelude)
 
@@ -636,16 +790,42 @@ class ProofExecutor:
                 prover_inference_ms=prover_inference_ms,
             )
 
-        # 7. All tasks succeeded - final verification
-        # (In a full implementation, we would splice proofs back and verify.
-        #  For now, we trust the individual verifications.)
+        # 7. All tasks succeeded - splice proofs back and final verify
+        spliced_code = splice_proofs(code_with_prelude, tasks, outcomes)
+
+        final_check = await self._lean.compile(
+            code=spliced_code,
+            timeout=self._config.verify_timeout,
+            allow_sorry=False,
+            snippet_id=f"{self._config.session_id}-final",
+        )
+
+        if not final_check.ok:
+            detail = "All subgoals solved but final verification failed."
+            if final_check.error_log:
+                detail = f"{detail}\n```lean4\n{final_check.error_log}\n```"
+            return ExecutionResult(
+                success=False,
+                stage="verify",
+                subgoals=len(task_specs),
+                detail=detail,
+                attempts=attempts_total,
+                proof_block=spliced_code,
+                prover_prompt_tokens=prover_prompt_tokens,
+                prover_completion_tokens=prover_completion_tokens,
+                prover_inference_ms=prover_inference_ms,
+            )
+
+        # Extract clean proof (without DEFER_PRELUDE) for the final result
+        clean_proof = extract_clean_proof(spliced_code, header_lines)
+
         return ExecutionResult(
             success=True,
             stage="done",
             subgoals=len(task_specs),
             detail=f"Executor solved all deferred subgoals. ({len(task_specs)} subgoal(s))",
             attempts=attempts_total,
-            proof_block=proof_block,
+            proof_block=clean_proof,
             prover_prompt_tokens=prover_prompt_tokens,
             prover_completion_tokens=prover_completion_tokens,
             prover_inference_ms=prover_inference_ms,
@@ -684,86 +864,239 @@ class ProofExecutor:
         spec: TaskSpec,
         verify_prefix: list[str],
     ) -> TaskOutcome:
-        """Solve a single task with retry."""
+        """Solve a single task with staggered attempts.
+
+        Only spawns the next attempt after the previous one has actually
+        started executing (acquired the semaphore) AND stagger_delay has
+        elapsed since that start. This prevents queueing all attempts at
+        the semaphore under congestion.
+        """
         snippet = render_task_snippet(spec, verify_prefix)
         prompt = build_prover_prompt(snippet)
+        stagger_delay = self._config.stagger_delay
+        loop = asyncio.get_running_loop()
 
-        total_attempts = 0
+        pending: set[asyncio.Task] = set()
+        started_events: list[asyncio.Event] = []
+        next_attempt_idx = 0
+        watched_attempt_idx = -1  # Which attempt we're waiting to start
+        start_time_of_watched: float | None = None  # When watched attempt started
+
+        completed_attempts = 0
         total_prompt_tokens = 0
         total_completion_tokens = 0
         total_latency_ms = 0.0
         last_log = ""
 
-        for attempt in range(self._config.max_prover_attempts):
-            total_attempts += 1
+        def _process_done(done_tasks: set[asyncio.Task]) -> TaskOutcome | None:
+            """Process completed tasks, return TaskOutcome if success found."""
+            nonlocal completed_attempts, total_prompt_tokens, total_completion_tokens
+            nonlocal total_latency_ms, last_log
 
-            # Call LLM - it handles concurrency via semaphore
+            for task in done_tasks:
+                completed_attempts += 1
+                try:
+                    result = task.result()
+                except Exception as e:
+                    last_log = str(e)
+                    continue
+
+                # Accumulate metrics from completed attempt
+                total_prompt_tokens += result.get("prompt_tokens", 0)
+                total_completion_tokens += result.get("completion_tokens", 0)
+                total_latency_ms += result.get("latency_ms", 0.0)
+
+                if result.get("success"):
+                    return TaskOutcome(
+                        idx=idx,
+                        success=True,
+                        body=result["body"],
+                        log="",
+                        attempts=completed_attempts,
+                        prompt_tokens=total_prompt_tokens,
+                        completion_tokens=total_completion_tokens,
+                        latency_ms=total_latency_ms,
+                    )
+                else:
+                    last_log = result.get("log", "Unknown error")
+            return None
+
+        def _spawn_attempt() -> None:
+            """Spawn the next attempt with a started_event."""
+            nonlocal next_attempt_idx, watched_attempt_idx, start_time_of_watched
+            event = asyncio.Event()
+            started_events.append(event)
+            task = asyncio.create_task(
+                self._single_attempt(
+                    idx, next_attempt_idx, spec, verify_prefix, prompt,
+                    started_event=event,
+                ),
+                name=f"task{idx}-attempt{next_attempt_idx}",
+            )
+            pending.add(task)
+            watched_attempt_idx = next_attempt_idx
+            start_time_of_watched = None  # Will be set when event fires
+            next_attempt_idx += 1
+
+        def _check_watched_started() -> bool:
+            """Check if watched attempt has started, update timing if so."""
+            nonlocal start_time_of_watched
+            if watched_attempt_idx < 0 or watched_attempt_idx >= len(started_events):
+                return False
+            event = started_events[watched_attempt_idx]
+            if event.is_set() and start_time_of_watched is None:
+                start_time_of_watched = loop.time()
+                return True
+            return start_time_of_watched is not None
+
+        def _can_spawn_next() -> bool:
+            """Check if we can spawn the next attempt."""
+            if next_attempt_idx >= self._config.max_prover_attempts:
+                return False
+            if next_attempt_idx == 0:
+                return True  # Always spawn first immediately
+            # Need watched attempt to have started + stagger_delay elapsed
+            if start_time_of_watched is None:
+                return False
+            elapsed = loop.time() - start_time_of_watched
+            return elapsed >= stagger_delay
+
+        # Main loop
+        while next_attempt_idx < self._config.max_prover_attempts or pending:
+            # Spawn next attempt if conditions are met
+            if _can_spawn_next():
+                _spawn_attempt()
+
+            if not pending:
+                break
+
+            # Determine timeout for wait
+            timeout: float | None = None
+            if next_attempt_idx < self._config.max_prover_attempts:
+                if start_time_of_watched is not None:
+                    # Waiting for stagger_delay to elapse
+                    elapsed = loop.time() - start_time_of_watched
+                    timeout = max(0.01, stagger_delay - elapsed)
+                else:
+                    # Waiting for watched attempt to start - poll periodically
+                    timeout = 0.1
+
+            # Wait for task completion or timeout
             try:
-                response = await self._llm.call(
-                    model=self._config.prover_model,
-                    messages=[{"role": "user", "content": prompt}],
-                    request_id=f"{self._config.session_id}-task{idx}-attempt{attempt}",
-                    **self._config.prover_sampling,
+                done, pending = await asyncio.wait(
+                    pending,
+                    timeout=timeout,
+                    return_when=asyncio.FIRST_COMPLETED,
                 )
-            except LLMError as e:
-                last_log = str(e)
-                continue
+            except Exception:
+                break
 
-            total_prompt_tokens += response.prompt_tokens
-            total_completion_tokens += response.completion_tokens
-            total_latency_ms += response.latency_ms
+            # Check if watched attempt has started
+            _check_watched_started()
 
-            # Extract proof body
-            lean_block = extract_last_lean_block(response.content)
-            if not lean_block:
-                last_log = "No Lean code block in response"
-                continue
+            # Process completed tasks
+            if done:
+                outcome = _process_done(done)
+                if outcome:
+                    # Cancel remaining pending attempts
+                    for p in pending:
+                        p.cancel()
+                    if pending:
+                        await asyncio.gather(*pending, return_exceptions=True)
+                    return outcome
 
-            body = extract_proof_body(lean_block)
-            if not body.strip():
-                last_log = "No proof body extracted"
-                continue
-
-            # Verify the proof
-            body_lines = [
-                f"  {line}" if line else "" for line in spec.prelude_lines
-            ]
-            body_lines.extend(
-                f"  {line}" if line else "" for line in body.strip().splitlines()
-            )
-            verify_code = (
-                "\n".join([*verify_prefix, spec.header, *body_lines]) + "\n"
-            )
-
-            verify_result = await self._lean.compile(
-                code=verify_code,
-                timeout=self._config.verify_timeout,
-                allow_sorry=False,
-                snippet_id=f"{self._config.session_id}-task{idx}-verify{attempt}",
-            )
-
-            if verify_result.ok:
-                merged_lines = spec.prelude_lines + body.strip().splitlines()
-                return TaskOutcome(
-                    idx=idx,
-                    success=True,
-                    body="\n".join(merged_lines),
-                    log="",
-                    attempts=total_attempts,
-                    prompt_tokens=total_prompt_tokens,
-                    completion_tokens=total_completion_tokens,
-                    latency_ms=total_latency_ms,
-                )
-
-            last_log = verify_result.error_log or "Verification failed"
-
+        # All attempts failed
         return TaskOutcome(
             idx=idx,
             success=False,
             body=None,
             log=last_log,
-            attempts=total_attempts,
+            attempts=completed_attempts,
             prompt_tokens=total_prompt_tokens,
             completion_tokens=total_completion_tokens,
             latency_ms=total_latency_ms,
         )
+
+    async def _single_attempt(
+        self,
+        task_idx: int,
+        attempt: int,
+        spec: TaskSpec,
+        verify_prefix: list[str],
+        prompt: str,
+        started_event: asyncio.Event | None = None,
+    ) -> dict[str, Any]:
+        """Execute a single proof attempt. Returns dict with result info.
+
+        Args:
+            task_idx: Index of the task being solved
+            attempt: Attempt number (0-indexed)
+            spec: Task specification
+            verify_prefix: Code prefix for verification
+            prompt: The prover prompt
+            started_event: Optional event to set when LLM call actually starts
+                          (after acquiring semaphore)
+        """
+        result: dict[str, Any] = {
+            "success": False,
+            "body": None,
+            "log": "",
+            "prompt_tokens": 0,
+            "completion_tokens": 0,
+            "latency_ms": 0.0,
+        }
+
+        # Call LLM
+        try:
+            response = await self._llm.call(
+                model=self._config.prover_model,
+                messages=[{"role": "user", "content": prompt}],
+                request_id=f"{self._config.session_id}-task{task_idx}-attempt{attempt}",
+                started_event=started_event,
+                **self._config.prover_sampling,
+            )
+        except LLMError as e:
+            result["log"] = str(e)
+            return result
+
+        result["prompt_tokens"] = response.prompt_tokens
+        result["completion_tokens"] = response.completion_tokens
+        result["latency_ms"] = response.latency_ms
+
+        # Extract proof body
+        lean_block = extract_last_lean_block(response.content)
+        if not lean_block:
+            result["log"] = "No Lean code block in response"
+            return result
+
+        body = extract_proof_body(lean_block)
+        if not body.strip():
+            result["log"] = "No proof body extracted"
+            return result
+
+        # Verify the proof
+        body_lines = [
+            f"  {line}" if line else "" for line in spec.prelude_lines
+        ]
+        body_lines.extend(
+            f"  {line}" if line else "" for line in body.strip().splitlines()
+        )
+        verify_code = (
+            "\n".join([*verify_prefix, spec.header, *body_lines]) + "\n"
+        )
+
+        verify_result = await self._lean.compile(
+            code=verify_code,
+            timeout=self._config.verify_timeout,
+            allow_sorry=False,
+            snippet_id=f"{self._config.session_id}-task{task_idx}-verify{attempt}",
+        )
+
+        if verify_result.ok:
+            merged_lines = spec.prelude_lines + body.strip().splitlines()
+            result["success"] = True
+            result["body"] = "\n".join(merged_lines)
+        else:
+            result["log"] = verify_result.error_log or "Verification failed"
+
+        return result

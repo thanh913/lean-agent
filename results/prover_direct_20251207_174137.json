@@ -1,0 +1,34 @@
+{
+  "config": {
+    "dataset": "AI-MO/minif2f_test",
+    "split": "train",
+    "limit": 2,
+    "model": "deepseek-ai/DeepSeek-Prover-V2-7B",
+    "temperature": 0.0,
+    "max_tokens": 2048,
+    "max_attempts": 1
+  },
+  "summary": {
+    "total": 2,
+    "solved": 1,
+    "failed": 1,
+    "pass_rate": 0.5,
+    "total_attempts": 2,
+    "total_latency_s": 87.83927154541016,
+    "wall_time_s": 53.344680070877075
+  },
+  "problems": [
+    {
+      "name": "mathd_algebra_478",
+      "success": true,
+      "attempts": 1,
+      "latency_ms": 34589.348793029785
+    },
+    {
+      "name": "numbertheory_4x3m7y3neq2003",
+      "success": false,
+      "attempts": 1,
+      "latency_ms": 53249.92275238037
+    }
+  ]
+}
